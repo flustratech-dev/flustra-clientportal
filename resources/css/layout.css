@@ -1,0 +1,42 @@
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url('/fonts/inter-variable.woff2') format('woff2');
+}
+
+/* ==================== Layout / App Base Styles ==================== */
+
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+/* Custom scrollbar for clean look */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.3);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(156, 163, 175, 0.5);
+}
+
+/* Custom SweetAlert2 Premium Theme */
+.dark .swal2-popup {
+    background-color: #1e293b !important; /* Slate 800 */
+    color: #f8fafc !important; /* Slate 50 */
+    border: 1px solid #334155 !important; /* Slate 700 */
+}
+.dark .swal2-title {
+    color: #ffffff !important;
+}
+.dark .swal2-html-container {
+    color: #94a3b8 !important; /* Slate 400 */
+}

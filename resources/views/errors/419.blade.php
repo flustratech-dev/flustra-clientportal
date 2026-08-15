@@ -1,0 +1,5 @@
+@extends('errors.layout')
+@section('kode', '419')
+@section('judul', 'Halaman terlalu lama dibiarkan terbuka')
+@section('pesan', 'Demi keamanan, formulir yang dibiarkan terbuka terlalu lama tidak lagi bisa dikirim. Muat ulang halamannya dan isi kembali — data Anda tidak ada yang hilang.')
+@section('aksi', 'Muat Ulang')
