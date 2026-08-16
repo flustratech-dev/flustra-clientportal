@@ -6,6 +6,31 @@
     src: url('/fonts/inter-variable.woff2') format('woff2');
 }
 
+/*
+ * Plus Jakarta Sans — font halaman welcome dan auth.
+ *
+ * Dilokalkan, sama seperti SweetAlert2 (CLAUDE.md §6), dan karena alasan yang
+ * sama ditambah satu: dua halaman inilah yang pertama dibuka setiap
+ * pengunjung. Lewat Google Fonts, teksnya baru bisa tampil setelah DNS + TLS
+ * ke fonts.googleapis.com, lalu CSS-nya, lalu round-trip kedua ke
+ * fonts.gstatic.com untuk berkas fontnya — tiga perjalanan ke pihak ketiga
+ * sebelum satu huruf pun muncul, di halaman yang seharusnya paling cepat.
+ *
+ * Hanya subset latin yang diambil (27 kB): portalnya berbahasa Indonesia saja
+ * (CLAUDE.md §3 nomor 6), jadi cyrillic, vietnamese, dan latin-ext tidak akan
+ * pernah terpakai. Satu berkas variabel melayani seluruh bobot 200–800.
+ */
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    font-style: normal;
+    font-weight: 200 800;
+    font-display: swap;
+    src: url('/fonts/plus-jakarta-sans-variable.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+                   U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+                   U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 /* ==================== Layout / App Base Styles ==================== */
 
 body {

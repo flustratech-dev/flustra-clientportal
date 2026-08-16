@@ -140,6 +140,12 @@
         ['route' => 'profil.edit',    'label' => 'Profil',   'match' => 'profil.*'],
         ['route' => 'bantuan',        'label' => 'Bantuan',  'match' => 'bantuan'],
     ];
+
+    // Admin portal dapat satu menu tambahan. Mitra tidak pernah melihatnya —
+    // dan bila menebak alamatnya pun mendapat 404, bukan 403.
+    if ($u?->isAdmin()) {
+        $navs[] = ['route' => 'admin.dashboard', 'label' => 'Kondisi Portal', 'match' => 'admin.*'];
+    }
 @endphp
 
 <!-- ==================== SIDEBAR (DESKTOP) ==================== -->
@@ -287,6 +293,9 @@
                 {{ session('error') }}
             </div>
         @endif
+
+        @include('partials.lihat-sebagai-bar')
+        @include('partials.maintenance-banner')
 
         @yield('content')
     </main>

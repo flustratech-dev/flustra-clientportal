@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\LihatSebagaiController;
+use App\Http\Controllers\Admin\MaintenanceController as AdminMaintenanceController;
 use App\Http\Controllers\Layanan\DataPerusahaanController;
 use App\Http\Controllers\Layanan\KonfirmasiBayarController;
 use App\Http\Controllers\Layanan\KontrakController;
@@ -28,6 +31,7 @@ use App\Http\Controllers\Portal\ProfileController;
 use App\Http\Controllers\Portal\SearchController;
 use App\Http\Controllers\Public\AkunController;
 use App\Http\Controllers\Public\AuthController;
+use App\Http\Controllers\Public\GoogleAuthController;
 use App\Http\Controllers\Public\WelcomeController;
 use Illuminate\Support\Facades\Route;
 
@@ -69,6 +73,21 @@ Route::middleware('guest')->group(function () {
 
     Route::get('/daftar', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/daftar', [AuthController::class, 'register'])->middleware('throttle:3,10');
+
+    /*
+     * Masuk dengan Google.
+     *
+     * Rutenya selalu terdaftar, tapi controllernya membalas 404 selama
+     * GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET masih kosong — jadi tidak perlu
+     * ada percabangan di berkas rute ini, dan `route('google.redirect')` tetap
+     * aman dipanggil view mana pun.
+     */
+    Route::get('/masuk/google', [GoogleAuthController::class, 'redirect'])
+        ->middleware('throttle:10,1')->name('google.redirect');
+    Route::get('/masuk/google/callback', [GoogleAuthController::class, 'callback'])
+        ->middleware('throttle:10,1')->name('google.callback');
+    Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])->name('auth.google');
+    Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback']);
 
     /*
      * Pemulihan kata sandi.
@@ -225,6 +244,34 @@ Route::middleware('auth')->group(function () {
         Route::get('/data', [DataVendorController::class, 'edit'])->name('data.edit');
         Route::put('/data', [DataVendorController::class, 'update'])
             ->middleware('throttle:5,60')->name('data.update');
+    });
+
+    /*
+     * ── Ruang admin portal ──────────────────────────────────────────────
+     *
+     * Untuk memantau kondisi portal: pengajuan yang gagal terkirim ke ERP,
+     * lalu lintas API, dan pengumuman. Sengaja TIDAK bisa menyetujui apa pun —
+     * keputusan atas data mitra ada di ERP, di tangan staf yang berwenang.
+     *
+     * Yang bukan admin mendapat 404, bukan 403.
+     */
+    Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+
+        Route::post('/pengajuan/{submission}/antre-ulang', [AdminDashboardController::class, 'antreUlang'])
+            ->whereNumber('submission')->name('antre-ulang');
+        Route::post('/pengajuan/antre-ulang-semua', [AdminDashboardController::class, 'antreUlangSemua'])
+            ->name('antre-ulang-semua');
+
+        Route::get('/pengumuman', [AdminMaintenanceController::class, 'edit'])->name('maintenance');
+        Route::put('/pengumuman', [AdminMaintenanceController::class, 'update'])->name('maintenance.update');
+
+        // Lihat portal dari sudut pandang mitra tertentu. Hanya baca —
+        // TolakTulisSaatLihatSebagai menolak seluruh aksi kirim selama aktif.
+        Route::get('/lihat-sebagai', [LihatSebagaiController::class, 'index'])->name('lihat-sebagai');
+        Route::post('/lihat-sebagai/{link}', [LihatSebagaiController::class, 'pilih'])
+            ->whereNumber('link')->name('lihat-sebagai.pilih');
+        Route::post('/lihat-sebagai/selesai', [LihatSebagaiController::class, 'selesai'])->name('lihat-sebagai.selesai');
     });
 
     // Profil.

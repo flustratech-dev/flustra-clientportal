@@ -30,7 +30,7 @@ class AuthController extends Controller
             return redirect()->route('beranda');
         }
 
-        return view('auth.login');
+        return view('auth.login', ['googleAktif' => GoogleAuthController::aktif()]);
     }
 
     public function login(Request $request)
@@ -82,7 +82,7 @@ class AuthController extends Controller
             ]);
         }
 
-        return view('auth.login');
+        return view('auth.login', ['googleAktif' => GoogleAuthController::aktif()]);
     }
 
     public function register(Request $request)

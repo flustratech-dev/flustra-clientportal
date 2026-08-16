@@ -22,6 +22,32 @@ return [
          * bukti transfer 5 MB lewat koneksi mitra bisa memakan puluhan detik.
          */
         'upload_timeout' => (int) env('ERP_UPLOAD_TIMEOUT', 60),
+
+        /*
+         * Umur cache pembacaan ERP, dalam detik. 0 = mati.
+         *
+         * Ini BUKAN salinan data ERP di portal — aturan "portal tidak menyimpan
+         * salinan data transaksi" tetap berlaku, dan alasannya tetap benar:
+         * saldo tagihan yang basi lebih berbahaya daripada tidak ada saldo sama
+         * sekali.
+         *
+         * Yang dikerjakan cache ini adalah menggabungkan permintaan yang
+         * berdekatan. Satu mitra membuka Tagihan, menekan tombol kembali, lalu
+         * membukanya lagi — tanpa cache itu tiga panggilan HTTP ke ERP dalam
+         * sepuluh detik untuk jawaban yang sama persis. Dengan 30 detik, angka
+         * yang dilihat mitra tidak pernah lebih tua dari setengah menit, dan
+         * beban ERP saat banyak mitra membuka bersamaan turun drastis.
+         *
+         * Dua penjaga yang membuat ini aman:
+         *  - hanya GET, dan hanya lewat ErpCustomerApi / ErpVendorApi;
+         *  - setiap POST milik mitra itu langsung membuang seluruh cache-nya,
+         *    jadi orang yang baru saja mengirim sesuatu selalu melihat keadaan
+         *    terbaru — bukan jawaban dari sebelum ia menekan Kirim.
+         *
+         * Naikkan hanya kalau ERP benar-benar kewalahan, dan sadari bahwa yang
+         * dibayar adalah kesegaran angka yang dilihat mitra.
+         */
+        'read_cache_seconds' => (int) env('ERP_READ_CACHE_SECONDS', 30),
     ],
 
     /*

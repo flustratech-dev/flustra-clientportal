@@ -4,6 +4,7 @@ namespace App\Services\Erp;
 
 use App\Models\PartnerLink;
 use App\Models\User;
+use App\Services\KonteksMitra;
 
 /**
  * Seluruh endpoint sisi pelanggan di ERP, dibungkus jadi metode bernama.
@@ -83,7 +84,7 @@ class ErpCustomerApi
     {
         return $this->client->getRaw(
             $this->prefix($user).'/invoices/'.$invoiceId.'/pdf',
-            ['portal_user_id' => $user->id],
+            ['portal_user_id' => $this->portalUserId($user)],
         );
     }
 
@@ -145,12 +146,16 @@ class ErpCustomerApi
      */
     public function storePaymentConfirmation(User $user, array $payload, array $files, ?int $submissionId = null): array
     {
-        return $this->client->postMultipart(
+        $respons = $this->client->postMultipart(
             $this->prefix($user).'/payment-confirmations',
-            $payload + ['portal_user_id' => $user->id],
+            $payload + ['portal_user_id' => $this->portalUserId($user)],
             $files,
             $submissionId,
         );
+
+        ErpBacaCache::lupakan($this->kunciMitra($user));
+
+        return $respons;
     }
 
     // =====================================================================
@@ -166,14 +171,18 @@ class ErpCustomerApi
     {
         $link = $this->link($user);
 
-        return $this->client->post('/change-requests', [
-            'portal_user_id'   => $user->id,
+        $respons = $this->client->post('/change-requests', [
+            'portal_user_id'   => $this->portalUserId($user),
             'portal_reference' => $portalReference,
             'partner_type'     => $link->partner_type,
             'partner_id'       => $link->erp_partner_id,
             'changes'          => $changes,
             'reason'           => $reason,
         ], $submissionId);
+
+        ErpBacaCache::lupakan($this->kunciMitra($user));
+
+        return $respons;
     }
 
     // =====================================================================
@@ -191,11 +200,13 @@ class ErpCustomerApi
      */
     public function link(User $user): PartnerLink
     {
-        $link = $user->activeLink();
+        $link = KonteksMitra::link($user, 'customer');
 
-        if (! $link || ! $link->isVerified() || $link->partner_type !== 'customer') {
+        if (! $link) {
             throw new ErpException(
-                'Akun ini belum terverifikasi sebagai pelanggan.',
+                $user->isAdmin()
+                    ? 'Pilih dulu mitra yang ingin Anda lihat di halaman "Lihat Sebagai".'
+                    : 'Akun ini belum terverifikasi sebagai pelanggan.',
                 retryable: false,
             );
         }
@@ -203,28 +214,71 @@ class ErpCustomerApi
         return $link;
     }
 
+    /**
+     * Id pengguna yang dikirim ke ERP.
+     *
+     * Biasanya id pemanggilnya sendiri. Bila admin portal sedang melihat
+     * sebagai mitra tertentu, yang dikirim adalah id PEMILIK link-nya — ERP
+     * memvalidasi id itu terhadap klaim terverifikasi, dan admin tidak punya
+     * klaim apa pun. Lihat catatan pertukaran keamanannya di KonteksMitra.
+     */
+    protected function portalUserId(User $user): int
+    {
+        return KonteksMitra::pemilik($user, $this->link($user))->id;
+    }
+
     protected function prefix(User $user): string
     {
         return '/customers/'.$this->link($user)->erp_partner_id;
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * Pembacaan, lewat cache pendek per mitra.
+     *
+     * Lihat ErpBacaCache untuk alasan dan batasnya — singkatnya: ini
+     * penggabung permintaan berdekatan, bukan salinan data ERP.
+     *
+     * @return array<string, mixed>
+     */
     protected function get(User $user, string $path, array $query = []): array
     {
-        return $this->client->get(
-            $this->prefix($user).$path,
-            $query + ['portal_user_id' => $user->id],
+        $penuh = $query + ['portal_user_id' => $this->portalUserId($user)];
+        $jalur = $this->prefix($user).$path;
+
+        return ErpBacaCache::ingat(
+            $this->kunciMitra($user),
+            $jalur,
+            $penuh,
+            fn () => $this->client->get($jalur, $penuh),
         );
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * Penulisan, dan sesudahnya cache baca mitra ini dibuang.
+     *
+     * Tanpa itu, pelanggan yang baru mengirim bukti transfer bisa kembali ke
+     * daftar tagihan dan melihat keadaan dari sebelum ia menekan Kirim —
+     * persis momen ketika orang paling ingin memastikan kirimannya masuk.
+     *
+     * @return array<string, mixed>
+     */
     protected function post(User $user, string $path, array $payload, ?int $submissionId = null): array
     {
-        return $this->client->post(
+        $respons = $this->client->post(
             $this->prefix($user).$path,
-            $payload + ['portal_user_id' => $user->id],
+            $payload + ['portal_user_id' => $this->portalUserId($user)],
             $submissionId,
         );
+
+        ErpBacaCache::lupakan($this->kunciMitra($user));
+
+        return $respons;
+    }
+
+    /** Kunci cache dipisah per mitra — isolasi data tidak boleh bocor lewat cache. */
+    protected function kunciMitra(User $user): string
+    {
+        return 'customer:'.$this->link($user)->erp_partner_id;
     }
 
     /**

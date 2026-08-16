@@ -7,9 +7,9 @@
     <title>Portal Klien Flustra</title>
     <meta name="description" content="Satu pintu untuk pelanggan dan vendor Flustra: konfirmasi pembayaran, penawaran, tagihan, dan pengiriman.">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    {{-- Plus Jakarta Sans dilokalkan di resources/css/layout.css — lihat
+         catatannya di sana. --}}
+    <link rel="preload" href="/fonts/plus-jakarta-sans-variable.woff2" as="font" type="font/woff2" crossorigin>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 

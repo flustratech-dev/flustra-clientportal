@@ -18,13 +18,24 @@ class DashboardController extends Controller
 
         $services = collect(ServiceCatalog::forUser($user))->groupBy('group');
 
-        // Query submissions otomatis terbatas ke pengguna ini lewat global scope.
+        // Empat angka, satu query. Dulu masing-masing punya SELECT COUNT(*)
+        // sendiri — empat perjalanan ke basis data untuk memindai tabel yang
+        // sama persis, di halaman yang dibuka setiap mitra setiap kali masuk.
+        // Query submissions tetap otomatis terbatas ke pengguna ini lewat
+        // global scope 'milik_sendiri'.
+        $hitung = Submission::selectRaw(
+            "SUM(CASE WHEN status IN ('submitted','received','under_review') THEN 1 ELSE 0 END) AS diproses,
+             SUM(CASE WHEN status = 'approved' AND last_status_at >= ? THEN 1 ELSE 0 END) AS disetujui,
+             SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) AS ditolak,
+             SUM(CASE WHEN status <> 'draft' THEN 1 ELSE 0 END) AS total",
+            [now()->startOfMonth()]
+        )->first();
+
         $stats = [
-            'diproses' => Submission::whereIn('status', ['submitted', 'received', 'under_review'])->count(),
-            'disetujui' => Submission::where('status', 'approved')
-                ->where('last_status_at', '>=', now()->startOfMonth())->count(),
-            'ditolak'  => Submission::where('status', 'rejected')->count(),
-            'total'    => Submission::whereNot('status', 'draft')->count(),
+            'diproses'  => (int) ($hitung->diproses ?? 0),
+            'disetujui' => (int) ($hitung->disetujui ?? 0),
+            'ditolak'   => (int) ($hitung->ditolak ?? 0),
+            'total'     => (int) ($hitung->total ?? 0),
         ];
 
         $recent = Submission::whereNot('status', 'draft')
@@ -32,8 +43,16 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        $pendingClaim = $user->partnerLinks()->where('status', 'pending')->latest()->first();
-        $rejectedClaim = $user->partnerLinks()->where('status', 'rejected')->latest()->first();
+        // Dua klaim terakhir dari satu query, bukan dua. Jumlah partner_links
+        // per akun selalu kecil (satu peran, kadang dua), jadi menyaringnya di
+        // PHP lebih murah daripada perjalanan kedua ke basis data.
+        $klaim = $user->partnerLinks()
+            ->whereIn('status', ['pending', 'rejected'])
+            ->latest()
+            ->get();
+
+        $pendingClaim  = $klaim->firstWhere('status', 'pending');
+        $rejectedClaim = $klaim->firstWhere('status', 'rejected');
 
         // $u dikirim dari sini, bukan diambil lewat @php di blade. Blade punya
         // jebakan halus: mencampur bentuk satu-baris @php(...) dengan blok

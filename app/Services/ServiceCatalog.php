@@ -37,6 +37,13 @@ class ServiceCatalog
 
     public static function isUnlocked(array $item, User $user): bool
     {
+        // Admin portal melihat seluruh kartu terbuka. Ia memang bertugas
+        // memeriksa setiap layanan; kartu yang redup hanya akan membuatnya
+        // mengira ada yang rusak.
+        if ($user->isAdmin()) {
+            return true;
+        }
+
         return in_array($user->account_type, $item['for'], true);
     }
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ApiSyncLog;
 use App\Models\PartnerLink;
 use App\Services\Erp\ErpEventApplier;
+use App\Services\Maintenance;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -89,6 +90,7 @@ class WebhookController extends Controller
             'claim.rejected'            => $this->klaimDitolak($data),
             'submission.status_changed' => $this->statusBerubah($data),
             'partner.revoked'           => $this->mitraDicabut($data),
+            'maintenance.changed'       => $this->pemeliharaanBerubah($data),
             default                     => ['status' => 422, 'message' => 'Event tidak dikenal: '.($event ?: '(kosong)')],
         };
 
@@ -200,6 +202,36 @@ class WebhookController extends Controller
         );
 
         return ['status' => 200, 'message' => $diterapkan ? 'Akses mitra dicabut.' : 'Sudah berstatus revoked.'];
+    }
+
+    /**
+     * Pemberitahuan pemeliharaan dari ERP.
+     *
+     * Pemeliharaan ERP membuat separuh layanan portal berhenti bekerja —
+     * tagihan tidak bisa ditarik, pengajuan menumpuk di antrean. Mitra perlu
+     * tahu itu, dan yang tahu jadwalnya adalah tim yang mematikan ERP-nya.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array{status: int, message: string}
+     */
+    protected function pemeliharaanBerubah(array $data): array
+    {
+        Maintenance::dariErp([
+            'active'       => ! empty($data['active']),
+            'title'        => isset($data['title']) ? Str::limit((string) $data['title'], 120) : null,
+            'message'      => isset($data['message']) ? Str::limit((string) $data['message'], 500) : null,
+            'severity'     => in_array($data['severity'] ?? '', ['info', 'warning', 'critical'], true)
+                ? $data['severity']
+                : 'warning',
+            'scheduled_at' => $data['scheduled_at'] ?? null,
+        ]);
+
+        return [
+            'status'  => 200,
+            'message' => ! empty($data['active'])
+                ? 'Pemberitahuan pemeliharaan dinyalakan.'
+                : 'Pemberitahuan pemeliharaan dimatikan.',
+        ];
     }
 
     // =====================================================================

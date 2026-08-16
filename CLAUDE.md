@@ -9,13 +9,14 @@ Baca sampai habis sebelum menulis baris pertama.
 > ditambah verifikasi email, pemulihan kata sandi, pencarian Ctrl+K, notifikasi
 > WhatsApp, dan halaman error sendiri.
 >
-> **26 uji otomatis lolos** (`php artisan test`): isolasi data antar-mitra,
-> penjagaan webhook, dan ketahanan saat ERP mati.
+> **56 uji otomatis lolos** (`php artisan test`): isolasi data antar-mitra,
+> penjagaan webhook, ketahanan saat ERP mati, rekonsiliasi status, cache baca
+> ERP, dan login Google.
 >
-> Yang tersisa hanya dua hal yang memang butuh keputusan/kredensial dari luar:
-> integrasi penyedia tanda tangan digital bersertifikat (§3 nomor 5) dan
-> login Google. Keduanya bukan pekerjaan yang tertunda, melainkan menunggu
-> pilihan penyedia dan kredensialnya.
+> Yang tersisa hanya satu, dan itu pun bukan pekerjaan: **kredensial OAuth
+> Google**. Kodenya sudah terpasang dan diuji; tanpa kredensial, fiturnya mati
+> bersih. Tanda tangan digital bersertifikat sudah diputuskan **tidak dipakai**
+> (§3 nomor 5), jadi ia tidak lagi menggantung di daftar mana pun.
 
 **Dokumen induk:** [`../PRD_FLUSTRA_CLIENTPORTAL.md`](../PRD_FLUSTRA_CLIENTPORTAL.md)
 — PRD lengkap 19 bagian. Kalau CLAUDE.md dan PRD bertentangan, **PRD yang menang**;
@@ -77,10 +78,14 @@ tiap sesi baru.
 
 4. **Lamaran kerja tetap di portal ini**, bukan dipindah ke flustra-web.
 
-5. **Tanda tangan digital bersertifikat dibutuhkan** untuk kontrak — bukan
-   sekadar *acknowledgement* nama+waktu+IP. Perlu penyedia pihak ketiga
-   (Privy / VIDA / Digisign / Peruri). Kolom `signature_*` di tabel `contracts`
-   milik ERP sudah disiapkan; integrasinya belum dikerjakan.
+5. **Tanpa tanda tangan digital bersertifikat** (dibatalkan 16 Agustus 2026 —
+   membalik keputusan sebelumnya). Persetujuan kontrak berhenti sebagai
+   *acknowledgement* nama+waktu+IP, dan itulah bentuk finalnya; halamannya
+   memang menyebut dirinya begitu, bukan mengaku tanda tangan. Tidak perlu
+   memilih penyedia (Privy / VIDA / Digisign / Peruri) dan tidak perlu
+   mengusulkannya lagi. Kolom `signature_*` di `contracts` milik ERP dibiarkan
+   menganggur — bukan dihapus, supaya tidak ada migration turun-naik untuk
+   sesuatu yang mungkin dihidupkan lagi suatu hari.
 
 6. **Bahasa Indonesia saja.** Tidak perlu i18n, tidak perlu versi Inggris.
 
@@ -128,7 +133,7 @@ Fase 0 di PRD **sudah dikerjakan** di `../flustra-erp`. Jangan membangun ulang;
 baca dulu apa yang sudah ada di sana.
 
 **API** — `flustra-erp/routes/api.php`, prefix `/api/portal/v1`, middleware
-`portal.token` + `throttle:120,1`. 23 endpoint. Autentikasi: header
+`portal.token` + `throttle:120,1`. Autentikasi: header
 `Authorization: Bearer <PORTAL_API_TOKEN>` (token statis, bandingkan dengan
 `hash_equals`), plus IP allowlist opsional.
 
@@ -540,24 +545,135 @@ Aturan yang lahir dari Fase 5–6:
   ditolak). Mengirimnya untuk setiap perubahan status akan membuat mitra
   mematikan notifikasinya, dan setelah itu tidak ada yang sampai.
 
+### Admin portal & pengumuman (16 Agustus 2026)
+
+**Akun admin** mengikuti pola seeder `flustra-erp` persis — variabel `.env`-nya
+pun bernama sama (`SUPER_ADMIN_NAME` / `EMAIL` / `PASSWORD` / `PHONE`) supaya
+bloknya bisa disalin bolak-balik antar-project, seperti nama kelas CSS di §6.
+
+```bash
+php artisan db:seed
+```
+
+Seeder **tidak menimpa akun yang sudah ada** — menjalankannya ulang saat deploy
+tidak boleh mengembalikan sandi yang sudah diganti admin ke nilai `.env`. Untuk
+memaksa memperbarui (atau membuat dengan sandi acak), pakai:
+
+```bash
+php artisan portal:admin
+```
+
+Kolomnya `users.role` (`mitra` | `admin`), **bukan** nilai baru di
+`account_type` — admin bukan jenis mitra, ia tidak punya `partner_links` dan
+tidak boleh ikut terhitung di daftar pelanggan mana pun. Yang bukan admin
+membuka `/admin` mendapat **404**, bukan 403.
+
+Admin portal **tidak bisa menyetujui apa pun**. Keputusan atas data mitra ada
+di ERP. Yang bisa dia lakukan: melihat kondisi portal (pengajuan gagal
+sinkron, lalu lintas API, antrean job), mengantre ulang kiriman yang gagal,
+memasang pengumuman, dan melihat portal sebagai mitra mana pun.
+
+#### "Lihat Sebagai" — akses penuh tanpa kartu terkunci
+
+Admin tidak punya `partner_links` sendiri, jadi tanpa ini seluruh kartu mitra
+terkunci untuknya. Halaman `/admin/lihat-sebagai` memberi konteks: pilih satu
+mitra terverifikasi, lalu seluruh layanan pelanggan/vendor terbuka dan berisi
+data mitra itu — persis yang dilihat mitranya sendiri saat menelepon mengeluh.
+
+Empat batas yang menyertainya, dan semuanya sengaja tidak bisa dimatikan dari
+layar admin:
+
+| Batas | Ditegakkan di |
+| --- | --- |
+| **Hanya baca** — seluruh aksi kirim ditolak selama konteks aktif | `TolakTulisSaatLihatSebagai`, dipasang global di grup `web` |
+| **Tercatat** — setiap perpindahan masuk `activity_logs` | `LihatSebagaiController` |
+| **Terlihat** — bilah menyala di setiap halaman | `partials/lihat-sebagai-bar.blade.php` |
+| **Ikut dicabut** — link ber-status `revoked` langsung hilang dari konteks | `KonteksMitra::pilihanAdmin()` |
+
+**Pertukaran keamanan yang harus dipahami sebelum menyentuh `KonteksMitra`:**
+agar ERP mau melayani permintaannya, portal mengirim `portal_user_id` **milik
+pemilik link**, bukan milik admin. Artinya lapisan kedua di ERP
+(`PortalPartnerResolver`) ditembus khusus untuk admin. Itu disadari — admin
+portal adalah staf tepercaya, dan tanpa ini "akses penuh" hanya berarti halaman
+terbuka yang isinya kosong. Yang menjaga agar tidak disalahgunakan adalah
+keempat batas di atas, bukan lapisan ERP-nya.
+
+Diuji di `tests/Feature/AdminAksesPenuhTest.php` (10 uji) — separuhnya justru
+memastikan pagar mitra biasa **tidak** ikut longgar.
+
+**Pengumuman punya dua sumber** dan keduanya disimpan terpisah:
+
+| Sumber | Dinyalakan dari | Untuk |
+| --- | --- | --- |
+| `erp_maintenance_*` | flustra-erp, terdorong lewat webhook `maintenance.changed` | Pemeliharaan ERP — separuh layanan portal ikut berhenti, mitra perlu tahu |
+| `maintenance_*` | Halaman `/admin/pengumuman` di portal | Hal yang tidak ada hubungannya dengan ERP: migrasi portal, pengumuman libur |
+
+Terpisah supaya tidak saling menimpa: ERP mematikan bannernya sendiri tidak
+boleh ikut menghapus pengumuman admin portal. Bila dua-duanya menyala, yang
+tampil yang dari portal — pesan itu lebih dekat dengan penggunanya. Bannernya
+muncul di layout aplikasi, layout publik, **dan** halaman masuk (layoutnya
+berdiri sendiri, jadi harus disisipkan bertiga).
+
+### Berkas env
+
+Empat berkas, mengikuti pola `flustra-erp`: `.env` (lokal, port 8008),
+`.env.development`, `.env.staging`, `.env.production`. SMTP (Brevo) dan
+WA gateway disalin dari ERP.
+
+Satu perbedaan penting dari ERP: **`QUEUE_CONNECTION=database`, bukan `sync`.**
+Seluruh janji portal bergantung pada itu — dengan `sync`, panggilan ke ERP
+terjadi di dalam request pengguna, dan ERP yang mati membuat pengiriman
+pelanggan ikut gagal. Konsekuensinya di Coolify wajib ada dua proses tambahan:
+
+```bash
+php artisan queue:work --tries=6 --timeout=120
+```
+
+```bash
+php artisan schedule:work
+```
+
 ### Yang BELUM ada
 
-Dua hal, dan keduanya menunggu keputusan atau kredensial dari luar — bukan
-pekerjaan yang tertinggal:
+Satu hal, dan itu pun hanya menunggu kredensial:
 
-1. **Tanda tangan digital bersertifikat** (§3 nomor 5). Perlu memilih
-   penyedianya dulu (Privy / VIDA / Digisign / Peruri). Kolom `signature_*` di
-   `contracts` sudah menunggu. Sampai itu ada, persetujuan kontrak dicatat
-   sebagai *acknowledgement* nama+waktu+IP — dan halamannya menyebut dirinya
-   begitu, bukan mengaku tanda tangan.
-2. **Login Google.** Butuh OAuth client dan redirect URI yang didaftarkan di
-   Google Console atas nama portal ini.
+1. **Kredensial OAuth Google.** Kodenya **sudah terpasang** —
+   `Public\GoogleAuthController`, rute `/masuk/google`, tombol di halaman masuk
+   dan daftar, dan 8 uji di `tests/Feature/LoginGoogleTest.php`. Yang belum ada
+   hanya `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` di `.env`.
 
-Satu catatan teknis: ERP belum punya `GET /submissions/{ref}/status` yang
-umum. Rekonsiliasi `portal:sync-status` karena itu hanya menarik status untuk
-`partner_claim` (lewat `GET /claims/{reference}`); jenis lain mengandalkan
-webhook `submission.status_changed`, yang kini dipanggil dari setiap layar staf
-yang bisa memutuskan sesuatu.
+   Selama keduanya kosong, **fiturnya mati bersih, bukan rusak**: rutenya
+   membalas 404 dan tombolnya tidak dirender sama sekali. Itu disengaja —
+   tombol yang sudah pasti gagal lebih buruk daripada tidak ada tombol.
+
+   Redirect URI yang harus didaftarkan di Google Cloud Console sudah tertulis
+   sebagai `GOOGLE_REDIRECT_URI` di masing-masing berkas `.env`, dan harus
+   didaftarkan **persis** seperti itu (skema, host, tanpa trailing slash).
+
+Tanda tangan digital bersertifikat **tidak lagi ada di daftar ini** — sudah
+diputuskan tidak dipakai; lihat §3 nomor 5.
+
+### Rekonsiliasi status — sudah lengkap (16 Agustus 2026)
+
+ERP kini punya `GET /submissions/{ref}/status` yang umum, jadi
+`portal:sync-status` merekonsiliasi **semua** jenis pengajuan, bukan hanya
+`partner_claim`. Sebelumnya satu webhook yang tidak sampai berarti pengajuannya
+mandek permanen tanpa jaring pengaman.
+
+Dua hal yang tidak boleh dibongkar:
+
+- **Terjemahan status ada di satu kelas**, `flustra-erp/app/Services/Portal/PortalSubmissionStatus.php`.
+  Dipakai bersama oleh jalur webhook dan jalur polling — persis alasan yang
+  sama dengan `ErpEventApplier` di sisi portal. Dua salinan akan pelan-pelan
+  berbeda, dan hasil akhirnya jadi bergantung pada jalur mana yang kebetulan
+  menang.
+- **404 dari endpoint itu berarti "kirim ulang", bukan "diamkan".** Pengajuan
+  bisa ditandai `synced` di portal padahal responsnya hilang di tengah jalan;
+  ERP idempoten terhadap `portal_reference`, jadi kiriman kedua aman.
+
+Klaim mitra tetap lewat jalurnya sendiri (`GET /claims/{reference}`): yang
+berubah di sana bukan hanya status pengajuan, tapi juga `partner_links` dan
+tipe akun penggunanya.
 
 ---
 

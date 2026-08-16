@@ -288,6 +288,13 @@ class ErpEventApplier
             return false;
         }
 
+        // ERP baru saja mengubah sesuatu milik mitra ini, jadi jawaban yang
+        // tersimpan di cache baca sudah tidak menggambarkan keadaan sekarang.
+        // Tanpa baris ini, mitra yang menerima notifikasi "pembayaran
+        // diverifikasi" lalu langsung membuka daftar tagihan bisa melihat
+        // tagihan itu masih terbuka — persis pada momen ia mengecek.
+        $this->lupakanCacheMitra($submission);
+
         $submission->transitionTo($status, $reason, 'erp', $actorName);
 
         Notification::send(
@@ -307,6 +314,21 @@ class ErpEventApplier
     }
 
     // =====================================================================
+
+    /**
+     * Buang cache baca ERP milik mitra pemilik pengajuan ini.
+     *
+     * Diam saja bila pengajuannya tidak terikat mitra mana pun (lamaran kerja,
+     * RFQ, pertanyaan) — tidak ada data mitra yang perlu disegarkan di sana.
+     */
+    protected function lupakanCacheMitra(Submission $submission): void
+    {
+        $link = $submission->partnerLink;
+
+        if ($link && $link->erp_partner_id) {
+            ErpBacaCache::lupakan($link->partner_type.':'.$link->erp_partner_id);
+        }
+    }
 
     /**
      * Pengajuan portal yang melahirkan klaim ini.

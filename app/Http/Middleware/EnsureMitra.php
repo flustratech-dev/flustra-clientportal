@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\KonteksMitra;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -33,13 +34,32 @@ class EnsureMitra
             return redirect()->route('login');
         }
 
+        $label = $tipe === 'customer' ? 'pelanggan' : 'vendor';
+
+        /*
+         * Admin portal tidak pernah terkunci.
+         *
+         * Ia tidak punya partner_links sendiri, jadi konteksnya diambil dari
+         * mitra yang sedang dipilih di halaman "Lihat Sebagai". Bila belum
+         * memilih, diarahkan ke sana — bukan ditolak, karena tidak ada yang
+         * salah dengan aksesnya, hanya kurang satu keterangan.
+         */
+        if ($user->isAdmin()) {
+            if (KonteksMitra::link($user, $tipe)) {
+                return $next($request);
+            }
+
+            return redirect()->route('admin.lihat-sebagai')->with(
+                'error',
+                'Pilih dulu mitra '.$label.' yang ingin Anda lihat.'
+            );
+        }
+
         $link = $user->activeLink();
 
         if ($link && $link->isVerified() && $link->partner_type === $tipe) {
             return $next($request);
         }
-
-        $label = $tipe === 'customer' ? 'pelanggan' : 'vendor';
 
         // Akun yang punya peran lain (mis. vendor membuka layanan pelanggan)
         // diberi tahu bahwa jalannya adalah berpindah peran, bukan mendaftar

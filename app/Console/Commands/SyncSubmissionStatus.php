@@ -97,15 +97,16 @@ class SyncSubmissionStatus extends Command
         $diterapkan = 0;
 
         foreach ($kandidat as $submission) {
-            // Fase 2 baru menyambungkan klaim mitra. Jenis lain menunggu
-            // endpoint status umum di ERP (Fase 3+); melewatinya lebih jujur
-            // daripada memanggil alamat yang belum ada.
-            if ($submission->type !== 'partner_claim') {
-                continue;
-            }
-
             try {
-                if ($this->tarikKlaim($erp, $applier, $submission)) {
+                // Klaim mitra punya jalurnya sendiri: yang berubah bukan hanya
+                // status pengajuannya, tapi juga `partner_links` dan tipe akun
+                // penggunanya. Itu urusan ErpEventApplier::claimVerified, bukan
+                // sekadar perpindahan status.
+                $berubah = $submission->type === 'partner_claim'
+                    ? $this->tarikKlaim($erp, $applier, $submission)
+                    : $this->tarikStatusUmum($erp, $applier, $submission);
+
+                if ($berubah) {
                     $diterapkan++;
                 }
             } catch (ErpException $e) {
@@ -121,6 +122,56 @@ class SyncSubmissionStatus extends Command
         }
 
         return $diterapkan;
+    }
+
+    /**
+     * Jenis pengajuan selain klaim, lewat `GET /submissions/{ref}/status`.
+     *
+     * 404 dari ERP berarti pengajuannya tidak pernah benar-benar sampai ke sana
+     * walau portal menandainya 'synced' — bisa terjadi kalau respons pertama
+     * hilang di tengah jalan. Yang tepat adalah mengirimnya ulang, bukan
+     * menunggu status yang tidak akan pernah ada. ERP idempoten terhadap
+     * `portal_reference`, jadi kiriman kedua aman.
+     */
+    protected function tarikStatusUmum(ErpClient $erp, ErpEventApplier $applier, Submission $submission): bool
+    {
+        try {
+            $data = $erp->get(
+                '/submissions/'.rawurlencode($submission->reference_number).'/status',
+                [],
+                $submission->id,
+            )['data'] ?? [];
+        } catch (ErpException $e) {
+            if ($e->statusCode === 404) {
+                $this->warn('  belum ada di ERP, dikirim ulang: '.$submission->reference_number);
+
+                $submission->forceFill(['sync_state' => 'pending'])->save();
+                SyncSubmissionToErp::dispatch($submission->id);
+
+                return true;
+            }
+
+            throw $e;
+        }
+
+        $status = $data['status'] ?? null;
+
+        if (! $status || ! in_array($status, $applier->allowedStatuses(), true)) {
+            return false;
+        }
+
+        if ($submission->status === $status) {
+            return false;
+        }
+
+        $this->line('  status menyusul dari ERP: '.$submission->reference_number.' → '.$status);
+
+        return $applier->submissionStatusChanged(
+            $submission,
+            $status,
+            $data['reason'] ?? null,
+            $data['erp_reference'] ?? null,
+        );
     }
 
     protected function tarikKlaim(ErpClient $erp, ErpEventApplier $applier, Submission $submission): bool

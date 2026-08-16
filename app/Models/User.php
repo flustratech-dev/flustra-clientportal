@@ -20,6 +20,7 @@ class User extends Authenticatable
         'phone',
         'avatar',
         'account_type',
+        'role',
         'active_link_id',
         'status',
         'google_id',
@@ -90,6 +91,18 @@ class User extends Authenticatable
     public function verifiedLinks()
     {
         return $this->partnerLinks()->where('status', 'verified')->orderBy('id')->get();
+    }
+
+    /**
+     * Admin portal — pemantau kondisi web, bukan staf ERP.
+     *
+     * Sengaja kolom terpisah dari `account_type`: admin bukan jenis mitra, ia
+     * tidak punya `partner_links` dan tidak boleh ikut terhitung di daftar
+     * pelanggan atau vendor mana pun.
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
     }
 
     public function isUmum(): bool

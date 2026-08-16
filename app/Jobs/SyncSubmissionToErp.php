@@ -468,7 +468,15 @@ class SyncSubmissionToErp implements ShouldBeUnique, ShouldQueue
         );
     }
 
-    /** POST /vendors/{id}/shipping-documents. */
+    /**
+     * POST /vendors/{id}/shipping-documents.
+     *
+     * Selesai begitu tercatat: surat jalan adalah pemberitahuan, bukan
+     * permintaan — tidak ada layar staf yang menyetujui atau menolaknya, jadi
+     * tidak ada yang akan pernah memajukan statusnya dari 'received'.
+     * Perjalanan barangnya sendiri terbaca di kartu "Surat Jalan", yang
+     * menampilkan status pencocokan dengan penerimaan gudang langsung dari ERP.
+     */
     protected function kirimSuratJalan(Submission $submission): void
     {
         $user    = $this->penggunaAtauGagal($submission);
@@ -492,7 +500,12 @@ class SyncSubmissionToErp implements ShouldBeUnique, ShouldQueue
             $submission->id,
         );
 
-        $this->tandaiTersinkron($submission, $response, 'Surat jalan Anda sudah diterima tim gudang kami.');
+        $this->tandaiTersinkron(
+            $submission,
+            $response,
+            'Surat jalan Anda sudah diterima tim gudang kami. Status kedatangan barangnya bisa Anda pantau di kartu Surat Jalan.',
+            statusAkhir: 'approved',
+        );
     }
 
     /**

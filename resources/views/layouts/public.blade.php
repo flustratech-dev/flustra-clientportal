@@ -54,6 +54,8 @@
 </header>
 
 <main class="relative z-10 flex-1 px-5 sm:px-8 py-6 max-w-3xl mx-auto w-full">
+    @include('partials.maintenance-banner')
+
     @yield('content')
 </main>
 

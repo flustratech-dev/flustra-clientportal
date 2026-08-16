@@ -112,4 +112,26 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Akun Admin Portal
+    |--------------------------------------------------------------------------
+    |
+    | Nama variabelnya sengaja SAMA PERSIS dengan flustra-erp (SUPER_ADMIN_*)
+    | supaya bloknya bisa disalin bolak-balik antar-project tanpa penyesuaian —
+    | pola yang sama dipakai untuk nama kelas CSS di §6 CLAUDE.md.
+    |
+    | Bedanya hanya perannya: di ERP 'super-admin' yang menguasai seluruh menu,
+    | di sini 'admin' yang hanya memantau kondisi portal dan tidak bisa
+    | menyetujui apa pun. Keputusan atas data mitra tetap di ERP.
+    |
+    */
+
+    'portal_admin' => [
+        'name'     => env('SUPER_ADMIN_NAME', 'Admin Portal'),
+        'email'    => env('SUPER_ADMIN_EMAIL'),
+        'password' => env('SUPER_ADMIN_PASSWORD'),
+        'phone'    => env('SUPER_ADMIN_PHONE'),
+    ],
+
 ];
