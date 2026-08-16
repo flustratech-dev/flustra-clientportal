@@ -743,15 +743,24 @@ WA gateway disalin dari ERP.
 Satu perbedaan penting dari ERP: **`QUEUE_CONNECTION=database`, bukan `sync`.**
 Seluruh janji portal bergantung pada itu — dengan `sync`, panggilan ke ERP
 terjadi di dalam request pengguna, dan ERP yang mati membuat pengiriman
-pelanggan ikut gagal. Konsekuensinya di Coolify wajib ada dua proses tambahan:
+pelanggan ikut gagal.
 
-```bash
-php artisan queue:work --tries=6 --timeout=120
-```
+Konsekuensinya container produksi menjalankan **tiga proses**: web,
+`queue:work`, dan `schedule:work`. Ketiganya ada di `start.sh` di root repo, dan
+Start Command di Coolify cukup `bash ./start.sh`.
 
-```bash
-php artisan schedule:work
-```
+**Satu container, bukan tiga resource Coolify.** Alasannya bukan beban proses —
+worker yang menganggur hanya puluhan MB — melainkan biaya build: setiap resource
+Coolify membangun ulang aplikasinya sendiri, jadi tiga resource berarti tiga
+kali `composer install` + `npm run build` tiap deploy di VPS yang juga menampung
+tujuh aplikasi Flustra lain.
+
+Kalau suatu saat satu worker tidak cukup menampung lonjakan pengajuan, barulah
+pisahkan workernya jadi resource sendiri. Sebelum itu, memisahkan hanya menambah
+biaya build tanpa menambah kapasitas.
+
+Panduan deploy lengkapnya:
+[`../PANDUAN_DEPLOY_COOLIFY_PORTAL_DAN_ERP.md`](../PANDUAN_DEPLOY_COOLIFY_PORTAL_DAN_ERP.md).
 
 ### Yang BELUM ada
 

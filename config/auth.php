@@ -128,7 +128,7 @@ return [
     */
 
     'portal_admin' => [
-        'name'     => env('SUPER_ADMIN_NAME', 'Admin Portal'),
+        'name'     => env('SUPER_ADMIN_NAME', 'Superadmin'),
         'email'    => env('SUPER_ADMIN_EMAIL'),
         'password' => env('SUPER_ADMIN_PASSWORD'),
         'phone'    => env('SUPER_ADMIN_PHONE'),

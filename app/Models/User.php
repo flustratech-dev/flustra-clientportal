@@ -94,15 +94,20 @@ class User extends Authenticatable
     }
 
     /**
-     * Admin portal — pemantau kondisi web, bukan staf ERP.
+     * Superadmin / Admin portal — pemantau kondisi web, bukan staf ERP.
      *
-     * Sengaja kolom terpisah dari `account_type`: admin bukan jenis mitra, ia
+     * Sengaja kolom terpisah dari `account_type`: superadmin bukan jenis mitra, ia
      * tidak punya `partner_links` dan tidak boleh ikut terhitung di daftar
      * pelanggan atau vendor mana pun.
      */
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return in_array($this->role, ['superadmin', 'admin'], true);
+    }
+
+    public function isSuperadmin(): bool
+    {
+        return in_array($this->role, ['superadmin', 'admin'], true);
     }
 
     public function isUmum(): bool
@@ -134,6 +139,10 @@ class User extends Authenticatable
 
     public function getAccountTypeLabelAttribute(): string
     {
+        if ($this->isAdmin() || $this->isSuperadmin()) {
+            return 'Superadmin';
+        }
+
         return match ($this->account_type) {
             'pelanggan' => 'Pelanggan',
             'vendor'    => 'Vendor',
@@ -148,6 +157,10 @@ class User extends Authenticatable
      */
     public function getAccountTypeColorAttribute(): string
     {
+        if ($this->isAdmin() || $this->isSuperadmin()) {
+            return 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400';
+        }
+
         return match ($this->account_type) {
             'pelanggan' => 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400',
             'vendor'    => 'bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400',

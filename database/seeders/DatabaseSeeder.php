@@ -37,16 +37,16 @@ class DatabaseSeeder extends Seeder
         }
 
         User::create([
-            'name'              => config('auth.portal_admin.name', 'Admin Portal'),
+            'name'              => config('auth.portal_admin.name', 'Superadmin'),
             'email'             => $email,
             'password'          => Hash::make($password),
             'phone'             => config('auth.portal_admin.phone'),
-            'role'              => 'admin',
+            'role'              => 'superadmin',
             'account_type'      => 'umum',
             'status'            => 'active',
             'email_verified_at' => now(),
         ]);
 
-        $this->command?->info('Akun admin portal dibuat: '.$email);
+        $this->command?->info('Akun superadmin portal dibuat: '.$email);
     }
 }

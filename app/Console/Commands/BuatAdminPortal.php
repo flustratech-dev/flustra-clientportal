@@ -17,20 +17,22 @@ use Illuminate\Support\Str;
  */
 class BuatAdminPortal extends Command
 {
-    protected $signature = 'portal:admin
-                            {--email= : Alamat email admin (bawaan: SUPER_ADMIN_EMAIL)}
-                            {--name= : Nama admin (bawaan: SUPER_ADMIN_NAME)}
+    protected $signature = 'portal:superadmin
+                            {--email= : Alamat email superadmin (bawaan: SUPER_ADMIN_EMAIL)}
+                            {--name= : Nama superadmin (bawaan: SUPER_ADMIN_NAME)}
                             {--password= : Kata sandi (bawaan: SUPER_ADMIN_PASSWORD, atau diacak)}';
 
-    protected $description = 'Buat atau perbarui akun admin portal untuk memantau kondisi web.';
+    protected $aliases = ['portal:admin'];
+
+    protected $description = 'Buat atau perbarui akun superadmin portal untuk memantau kondisi web.';
 
     public function handle(): int
     {
         $email = $this->option('email') ?: config('auth.portal_admin.email');
-        $nama  = $this->option('name') ?: config('auth.portal_admin.name', 'Admin Portal');
+        $nama  = $this->option('name') ?: config('auth.portal_admin.name', 'Superadmin');
 
         if (! $email) {
-            $this->error('Alamat email admin belum ditentukan. Isi SUPER_ADMIN_EMAIL di .env atau pakai --email.');
+            $this->error('Alamat email superadmin belum ditentukan. Isi SUPER_ADMIN_EMAIL di .env atau pakai --email.');
 
             return self::FAILURE;
         }
@@ -50,24 +52,24 @@ class BuatAdminPortal extends Command
             $user->forceFill([
                 'name'              => $nama,
                 'password'          => Hash::make($sandi),
-                'role'              => 'admin',
+                'role'              => 'superadmin',
                 'status'            => 'active',
                 'email_verified_at' => $user->email_verified_at ?? now(),
             ])->save();
 
-            $this->info('Akun admin diperbarui: '.$email);
+            $this->info('Akun superadmin diperbarui: '.$email);
         } else {
             User::create([
                 'name'              => $nama,
                 'email'             => $email,
                 'password'          => Hash::make($sandi),
-                'role'              => 'admin',
+                'role'              => 'superadmin',
                 'account_type'      => 'umum',
                 'status'            => 'active',
                 'email_verified_at' => now(),
             ]);
 
-            $this->info('Akun admin dibuat: '.$email);
+            $this->info('Akun superadmin dibuat: '.$email);
         }
 
         if ($diacak) {

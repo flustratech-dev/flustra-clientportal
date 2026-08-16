@@ -34,7 +34,7 @@
             </p>
             <a href="{{ route('mitra.create') }}" class="btn-primary shrink-0 whitespace-nowrap">Ajukan ulang</a>
         </div>
-    @elseif($u->isUmum())
+    @elseif($u->isUmum() && ! $u->isAdmin())
         <div class="erp-card !p-4 md:!p-5 border-blue-200 dark:border-blue-800/80 bg-blue-50/70 dark:bg-blue-950/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <p class="text-xs sm:text-sm text-blue-700 dark:text-blue-400 leading-relaxed text-left">
                 <strong class="font-bold">Buka layanan penuh.</strong>
