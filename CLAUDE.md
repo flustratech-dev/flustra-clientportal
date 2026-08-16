@@ -230,7 +230,13 @@ header. Ini satu-satunya tempat portal sengaja berbeda dari `flustra-erp`; sisa
 | Elemen | Spesifikasi |
 | --- | --- |
 | Header | `sticky top-0 h-14` — logo · menu mendatar (`hidden md:flex`) · cari · lonceng · tema · **dropdown avatar**. **Mentok kiri-kanan** (`px-4`), tidak ikut kolom terpusat mana pun — ketentuan pemilik produk, jangan dibungkus `max-w-*` |
-| Rata tengah | Judul halaman, sapaan beranda, label kelompok layanan, dan **isi setiap kartu** rata tengah. Di kartu layanan, lencana kunci/SEGERA dipojokkan `absolute top-3 right-3` — kalau didudukkan sebaris dengan ikon, kartu yang punya lencana menggeser ikonnya keluar dari tengah |
+| Kolom konten | `max-w-7xl mx-auto` di dalam `<main>` — **terpusat**, dan ini yang membedakannya dari header. Tanpa batas lebar, grid empat kolom terus melar di monitor lebar sampai kolom keempatnya terpotong di tepi kanan, dan seluruh isinya tampak bergeser ke kiri walau tiap kartunya sudah rata tengah |
+| Rata tengah | Judul halaman, sapaan beranda, label kelompok layanan, kartu banner, daftar aktivitas, dan **isi setiap kartu** rata tengah. Di kartu layanan, lencana kunci/SEGERA dipojokkan `absolute top-3 right-3` — kalau didudukkan sebaris dengan ikon, kartu yang punya lencana menggeser ikonnya keluar dari tengah |
+
+> **Dua hal berbeda yang gampang tertukar** — pernah salah dikerjakan dua kali:
+> **kolomnya terpusat** (`max-w-7xl mx-auto`, supaya kartu tidak melar dan
+> terpotong) DAN **isinya rata tengah** (`text-center`). Mengerjakan salah satu
+> saja tidak pernah terlihat benar. Header tidak ikut keduanya.
 | Profil | **hanya** di dropdown avatar kanan header, pola ERP. Sengaja tidak ikut di daftar menu: dua pintu ke satu halaman membuat orang ragu mana yang benar |
 | Bottom nav mobile | `fixed bottom-0 h-16 flex md:hidden` — Beranda · Riwayat · Notifikasi · Bantuan (+ Kondisi Portal untuk admin) |
 | Panel mobile | sheet `rounded-t-3xl max-h-[85vh]` naik dari bawah |
@@ -653,6 +659,29 @@ memaksa memperbarui (atau membuat dengan sandi acak), pakai:
 ```bash
 php artisan portal:admin
 ```
+
+**Seeder portal sengaja hanya berisi akun admin.** Tidak ada data contoh, tidak
+ada mitra palsu — seluruh data transaksi milik ERP, dan mitranya mendaftar
+sendiri. Jangan menambahkan seeder data dummy ke sini: begitu ada, ia akan ikut
+terbawa ke produksi pada `db:seed` pertama saat deploy.
+
+Untuk mengosongkan sisa data uji coba (16 Agustus 2026 sudah dijalankan sekali,
+tepat sebelum portal dipakai sungguhan):
+
+```bash
+php artisan portal:bersihkan-uji
+```
+
+Menghapus seluruh akun mitra beserta klaim, pengajuan, lampiran, timeline,
+notifikasi, log, antrean, sesi, dan cache — **termasuk berkas fisiknya di disk
+privat**, bagian yang paling gampang tertinggal kalau pembersihannya lewat SQL
+langsung, dan yang paling tidak enak kalau tertinggal (di situ ada bukti
+transfer dan CV pelamar).
+
+Yang dipertahankan: akun ber-`role = 'admin'` dan `portal_settings` (itu setelan
+banner pemeliharaan, bukan data uji). Perintahnya bertanya lebih dulu dan
+menolak jalan kalau tidak ada satu pun akun admin — tanpa penjagaan itu, ia akan
+mengosongkan tabel `users` sampai tidak ada yang bisa masuk lagi.
 
 Kolomnya `users.role` (`mitra` | `admin`), **bukan** nilai baru di
 `account_type` — admin bukan jenis mitra, ia tidak punya `partner_links` dan
