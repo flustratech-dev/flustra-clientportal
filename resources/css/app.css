@@ -5,9 +5,30 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
 @source '../**/*.js';
+
+/*
+ * Sengaja TIDAK memindai '../../storage/framework/views/*.php' — beda dari
+ * flustra-erp, dan ini satu-satunya tempat portal menyimpang dari salinannya.
+ *
+ * Folder itu isinya hanya hasil kompilasi berkas Blade yang sudah dipindai
+ * baris di atasnya, jadi tidak menambah satu kelas pun. Yang ia tambahkan
+ * hanya kerapuhan: `php artisan view:clear` mengosongkannya, sementara
+ * `vite.config.js` justru menyuruh watcher MENGABAIKAN folder yang sama
+ * (`watch.ignored`) supaya tidak terjadi rebuild berputar. Dua setelan itu
+ * saling bertabrakan — Tailwind kehilangan kandidat kelasnya, lalu tidak
+ * pernah diberi tahu saat view-nya dikompilasi ulang.
+ *
+ * Gejalanya sangat menyesatkan: dev server tetap melapor sukses, halamannya
+ * tetap terbuka, tapi utilitas seperti `min-h-[550px]` hilang dari CSS
+ * sehingga kartu login mengempis jadi setinggi 2 piksel dan layarnya tampak
+ * kosong. `npm run build` tidak pernah kena karena ia memindai dari nol.
+ *
+ * ERP boleh tetap memakainya: di sana ada view lama yang merangkai kelas saat
+ * runtime. Portal tidak punya itu — accessor mengembalikan kelas utuh sejak
+ * awal (lihat CLAUDE.md §6).
+ */
 
 
 @theme {

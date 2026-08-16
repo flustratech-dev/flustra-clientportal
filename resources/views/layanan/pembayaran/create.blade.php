@@ -1,10 +1,13 @@
 @extends('layouts.app')
 @section('title', 'Konfirmasi Pembayaran')
 @section('page_title', 'Konfirmasi Pembayaran')
-@section('breadcrumb_title', 'Konfirmasi Pembayaran')
+@section('page_subtitle', 'Kirim bukti transfer Anda; tim Finance kami yang memverifikasinya.')
+@section('lebar', 'max-w-2xl mx-auto')
+@section('kembali_url', route('layanan.tagihan.index'))
+@section('kembali_label', 'Tagihan')
 
 @section('content')
-<div class="space-y-5 max-w-2xl">
+<div class="space-y-5">
 
     @include('partials.erp-offline')
 

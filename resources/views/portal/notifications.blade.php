@@ -1,7 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Notifikasi')
 @section('page_title', 'Notifikasi')
-@section('breadcrumb_title', 'Notifikasi')
 
 @section('content')
 <div class="space-y-4 max-w-2xl">

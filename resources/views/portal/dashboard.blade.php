@@ -1,13 +1,14 @@
 @extends('layouts.app')
 @section('title', 'Beranda')
-@section('page_title', 'Beranda')
+{{-- Sengaja tanpa @section('page_title'): halaman ini punya sapaan sendiri
+     ("Halo, nama") di bawah, dan layout akan menambahkan judul kedua. --}}
 
 @section('content')
 
 <div class="space-y-5">
 
     {{-- Sapaan --}}
-    <div class="flex flex-wrap items-center gap-2">
+    <div class="flex flex-wrap items-center justify-center gap-2">
         <h1 class="text-lg font-bold text-slate-800 dark:text-white">Halo, {{ $u->name }}</h1>
         <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {{ $u->account_type_color }}">
             {{ $u->account_type_label }}
@@ -16,7 +17,7 @@
 
     {{-- Banner aksi: hanya muncul kalau memang ada yang perlu ditindaklanjuti --}}
     @if($pendingClaim)
-        <div class="erp-card !p-3.5 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 flex flex-wrap items-center justify-between gap-3">
+        <div class="erp-card !p-3.5 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 flex flex-col items-center text-center gap-3">
             <p class="text-xs text-amber-700 dark:text-amber-400">
                 <strong>Pengajuan kerja sama Anda sedang diperiksa.</strong>
                 Kami akan mengabari begitu tim selesai mencocokkan data {{ $pendingClaim->company_name }}.
@@ -24,7 +25,7 @@
             <a href="{{ route('riwayat.index') }}" class="btn-secondary shrink-0">Lihat status</a>
         </div>
     @elseif($u->isUmum() && $rejectedClaim)
-        <div class="erp-card !p-3.5 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 flex flex-wrap items-center justify-between gap-3">
+        <div class="erp-card !p-3.5 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 flex flex-col items-center text-center gap-3">
             <p class="text-xs text-red-700 dark:text-red-400">
                 <strong>Pengajuan sebelumnya belum bisa kami setujui.</strong>
                 {{ $rejectedClaim->rejected_reason ?: 'Silakan periksa kembali bukti yang Anda lampirkan.' }}
@@ -33,7 +34,7 @@
             <a href="{{ route('mitra.create') }}" class="btn-primary shrink-0">Ajukan ulang</a>
         </div>
     @elseif($u->isUmum())
-        <div class="erp-card !p-3.5 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 flex flex-wrap items-center justify-between gap-3">
+        <div class="erp-card !p-3.5 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 flex flex-col items-center text-center gap-3">
             <p class="text-xs text-blue-700 dark:text-blue-400">
                 <strong>Buka layanan penuh.</strong>
                 Ajukan verifikasi sebagai pelanggan atau vendor untuk melihat tagihan, penawaran, dan pengiriman Anda.
@@ -45,7 +46,7 @@
     {{-- Verifikasi email. Tidak memblokir apa pun kecuali pengajuan klaim
          mitra — di situlah identitas mulai berarti. --}}
     @unless($u->email_verified_at)
-        <div class="erp-card !p-3.5 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 flex flex-wrap items-center justify-between gap-3">
+        <div class="erp-card !p-3.5 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 flex flex-col items-center text-center gap-3">
             <p class="text-xs text-amber-700 dark:text-amber-400">
                 <strong>Verifikasi email Anda.</strong>
                 Kami perlu memastikan {{ $u->email }} benar milik Anda sebelum pengajuan kerja sama bisa diproses.
@@ -66,7 +67,7 @@
             ['Ditolak', $stats['ditolak'], 'text-red-500'],
             ['Total Pengajuan', $stats['total'], 'text-slate-700 dark:text-slate-200'],
         ] as [$label, $angka, $warna])
-            <div class="erp-card">
+            <div class="erp-card text-center">
                 <p class="erp-label !mb-1">{{ $label }}</p>
                 <p class="text-2xl font-bold {{ $warna }}">{{ $angka }}</p>
             </div>
@@ -77,7 +78,7 @@
     {{-- Grid layanan --}}
     @foreach($services as $group => $items)
         <div>
-            <h2 class="erp-label !text-[11px] mb-2">{{ $group }}</h2>
+            <h2 class="erp-label !text-[11px] mb-2 text-center">{{ $group }}</h2>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                 @foreach($items as $item)
@@ -89,22 +90,24 @@
 
                     <div x-data="{ pesan: false }" class="relative">
                         <a @if($aktif) href="{{ route($item['route']) }}" @else href="#" @click.prevent="pesan = true" @endif
-                           class="erp-card block h-full transition-all {{ $aktif ? 'floating-card hover:border-blue-300 dark:hover:border-blue-700' : 'opacity-60 cursor-help' }}">
+                           class="erp-card relative block h-full text-center transition-all {{ $aktif ? 'floating-card hover:border-blue-300 dark:hover:border-blue-700' : 'opacity-60 cursor-help' }}">
 
-                            <div class="flex items-start justify-between gap-2 mb-2">
-                                <span class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0
-                                    {{ $aktif ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-400' }}">
-                                    @include('partials.service-icon', ['name' => $item['icon']])
-                                </span>
+                            {{-- Lencana dipojokkan secara absolut, bukan didudukkan
+                                 sebaris dengan ikon: kalau sebaris, kartu yang punya
+                                 lencana menggeser ikonnya keluar dari tengah dan
+                                 barisan ikon jadi tidak lurus. --}}
+                            @if($terkunci)
+                                <svg class="absolute top-3 right-3 w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                </svg>
+                            @elseif($segera)
+                                <span class="absolute top-3 right-3 px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 text-[9px] font-bold">SEGERA</span>
+                            @endif
 
-                                @if($terkunci)
-                                    <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                                    </svg>
-                                @elseif($segera)
-                                    <span class="px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 text-[9px] font-bold shrink-0">SEGERA</span>
-                                @endif
-                            </div>
+                            <span class="w-9 h-9 rounded-xl flex items-center justify-center mx-auto mb-2
+                                {{ $aktif ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-400' }}">
+                                @include('partials.service-icon', ['name' => $item['icon']])
+                            </span>
 
                             <h3 class="text-xs font-bold text-slate-800 dark:text-white leading-snug">{{ $item['title'] }}</h3>
                             <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">{{ $item['desc'] }}</p>
@@ -136,7 +139,7 @@
     {{-- Aktivitas terakhir --}}
     @if($recent->isNotEmpty())
     <div>
-        <div class="flex items-center justify-between mb-2">
+        <div class="flex flex-col items-center gap-1 mb-2">
             <h2 class="erp-label !text-[11px] !mb-0">Aktivitas Terakhir</h2>
             <a href="{{ route('riwayat.index') }}" class="text-[11px] text-blue-500 hover:underline">Lihat semua</a>
         </div>
@@ -144,8 +147,8 @@
         <div class="erp-card !p-0 divide-y divide-slate-100 dark:divide-slate-800">
             @foreach($recent as $s)
                 <a href="{{ route('riwayat.show', $s) }}"
-                   class="flex flex-wrap items-center gap-2 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                    <span class="text-xs font-semibold text-slate-800 dark:text-white flex-1 min-w-0 truncate">{{ $s->title }}</span>
+                   class="flex flex-wrap items-center justify-center gap-2 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                    <span class="text-xs font-semibold text-slate-800 dark:text-white truncate">{{ $s->title }}</span>
                     <span class="text-[10px] text-slate-400 font-mono">{{ $s->reference_number }}</span>
                     <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {{ $s->status_color }}">{{ $s->status_label }}</span>
                 </a>

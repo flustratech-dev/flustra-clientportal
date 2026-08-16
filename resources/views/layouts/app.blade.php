@@ -129,15 +129,18 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col md:flex-row transition-colors duration-200 pb-16 md:pb-0">
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200 pb-16 md:pb-0">
 
 @php
     $u = auth()->user();
+
+    // Profil sengaja TIDAK ada di daftar ini: tempatnya di dropdown avatar
+    // sebelah kanan header, mengikuti pola flustra-erp. Menaruhnya di dua
+    // tempat sekaligus membuat pengguna ragu mana yang "benar".
     $navs = [
         ['route' => 'beranda',        'label' => 'Beranda',  'match' => 'beranda'],
         ['route' => 'riwayat.index',  'label' => 'Riwayat',  'match' => 'riwayat.*'],
         ['route' => 'notifikasi.index','label' => 'Notifikasi','match' => 'notifikasi.*'],
-        ['route' => 'profil.edit',    'label' => 'Profil',   'match' => 'profil.*'],
         ['route' => 'bantuan',        'label' => 'Bantuan',  'match' => 'bantuan'],
     ];
 
@@ -148,58 +151,45 @@
     }
 @endphp
 
-<!-- ==================== SIDEBAR (DESKTOP) ==================== -->
-<aside class="fixed inset-y-0 left-0 z-50 w-52 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 hidden md:flex flex-col transition-colors">
-
-    <a href="{{ route('beranda') }}" class="h-14 flex items-center gap-2.5 px-4 border-b border-slate-200 dark:border-slate-700 shrink-0 group">
-        <img src="{{ asset('images/flustraa.png') }}" alt="Flustra Logo" class="w-7 h-7 object-contain group-hover:scale-105 transition-transform duration-200 shrink-0">
-        <div class="min-w-0 flex flex-col justify-center">
-            <span class="text-xs font-bold text-slate-800 dark:text-white truncate leading-tight">Flustra</span>
-            <span class="text-[8px] uppercase font-bold tracking-wider text-[#3572EF] truncate leading-tight">Client Portal</span>
-        </div>
-    </a>
-
-    <nav id="sidebar-nav" class="flex-1 min-h-0 px-3 py-3 space-y-0.5 overflow-y-auto">
-        @foreach($navs as $nav)
-            <a href="{{ route($nav['route']) }}"
-               class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all {{ request()->routeIs($nav['match']) ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}">
-                @include('partials.nav-icon', ['name' => $nav['route']])
-                {{ $nav['label'] }}
-                @if($nav['route'] === 'notifikasi.index')
-                    <span x-show="unreadCount > 0" x-cloak
-                          class="ml-auto px-1.5 py-0.5 rounded-full bg-blue-500 text-white text-[9px] font-bold"
-                          x-text="unreadCount"></span>
-                @endif
-            </a>
-        @endforeach
-    </nav>
-
-    <div class="p-3 border-t border-slate-200 dark:border-slate-700 shrink-0">
-        <div class="flex items-center gap-2 mb-2">
-            <img src="{{ $u->avatar_url }}" alt="" class="w-7 h-7 rounded-full object-cover shrink-0">
-            <div class="min-w-0 flex-1">
-                <p class="text-xs font-semibold text-slate-800 dark:text-white truncate leading-tight">{{ $u->name }}</p>
-                <span class="inline-block px-1.5 py-0.5 rounded-full text-[9px] font-bold {{ $u->account_type_color }}">
-                    {{ $u->account_type_label }}
-                </span>
-            </div>
-        </div>
-        <form action="{{ route('logout') }}" method="POST">
-            @csrf
-            <button type="submit" class="btn-secondary w-full justify-center">Keluar</button>
-        </form>
-    </div>
-</aside>
-
 <!-- ==================== KONTEN ==================== -->
-<div class="flex-1 md:ml-52 flex flex-col min-w-0">
+<div class="flex-1 flex flex-col min-w-0">
 
-    <!-- Header -->
-    <header class="sticky top-0 z-40 h-14 bg-white/90 dark:bg-slate-800/90 backdrop-blur border-b border-slate-200 dark:border-slate-700 flex items-center gap-3 px-4 transition-colors">
-        <h2 class="text-sm font-semibold text-slate-800 dark:text-white truncate flex-1">@yield('page_title', 'Portal Klien')</h2>
+    {{-- Header tunggal: logo, menu, lalu perkakas di kanan.
+         Tidak ada sidebar — keputusan pemilik produk, lihat CLAUDE.md §6. --}}
+    {{-- Header sengaja mentok kiri-kanan, tidak ikut kolom terpusat mana pun
+         (ketentuan pemilik produk). --}}
+    <header class="sticky top-0 z-40 h-14 bg-white/90 dark:bg-slate-800/90 backdrop-blur border-b border-slate-200 dark:border-slate-700 flex items-center gap-2 px-4 transition-colors">
+
+        <a href="{{ route('beranda') }}" class="flex items-center gap-2.5 shrink-0 group mr-1">
+            <img src="{{ asset('images/flustraa.png') }}" alt="Flustra Logo" class="w-7 h-7 object-contain group-hover:scale-105 transition-transform duration-200 shrink-0">
+            <div class="min-w-0 hidden sm:flex flex-col justify-center">
+                <span class="text-xs font-bold text-slate-800 dark:text-white truncate leading-tight">Flustra</span>
+                <span class="text-[8px] uppercase font-bold tracking-wider text-[#3572EF] truncate leading-tight">Client Portal</span>
+            </div>
+        </a>
+
+        {{-- Menu utama. Di bawah md digantikan bottom nav — deretan mendatar
+             tidak muat di lebar 375px tanpa menyusut jadi tidak terbaca. --}}
+        <nav class="hidden md:flex items-center gap-0.5 min-w-0 flex-1">
+            @foreach($navs as $nav)
+                <a href="{{ route($nav['route']) }}"
+                   class="relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all {{ request()->routeIs($nav['match']) ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}">
+                    {{ $nav['label'] }}
+                    @if($nav['route'] === 'notifikasi.index')
+                        <span x-show="unreadCount > 0" x-cloak
+                              class="ml-1 px-1.5 py-0.5 rounded-full bg-blue-500 text-white text-[9px] font-bold"
+                              x-text="unreadCount"></span>
+                    @endif
+                </a>
+            @endforeach
+        </nav>
+
+        {{-- Di mobile logo tidak memakan seluruh lebar, jadi perkakas kanan
+             tetap terdorong ke tepi. --}}
+        <div class="flex-1 md:hidden"></div>
 
         {{-- Pemicu pencarian. Di mobile hanya ikon: bilah lengkap memakan
-             lebar yang lebih dibutuhkan judul halaman. --}}
+             lebar yang lebih dibutuhkan menu. --}}
         <button @click="bukaCari()"
                 class="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-400 hover:border-slate-300 dark:hover:border-slate-600 transition-colors cursor-pointer"
                 aria-label="Cari">
@@ -271,33 +261,116 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
             </svg>
         </button>
+
+        {{-- Profil: dropdown avatar, bukan blok di kaki sidebar. Pola ERP,
+             lihat resources/views/layouts/app.blade.php di sana. --}}
+        <div class="relative shrink-0" x-data="{ profilBuka: false }">
+            <button @click="profilBuka = !profilBuka"
+                    class="flex items-center gap-1.5 rounded-xl p-0.5 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                    aria-label="Menu profil">
+                <img src="{{ $u->avatar_url }}" alt="{{ $u->name }}"
+                     class="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-slate-700 shrink-0" loading="lazy">
+                <svg class="w-3 h-3 text-slate-400 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+
+            {{-- @click.outside dipasang di PANELNYA, bukan di pembungkus —
+                 pola yang sama dengan lonceng notifikasi di atas. Dipasang di
+                 pembungkus, klik pada tombolnya sendiri ikut menutupnya kembali
+                 seketika, jadi dropdown-nya tidak pernah sempat terlihat. --}}
+            <div x-show="profilBuka" x-cloak @click.outside="profilBuka = false"
+                 x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="opacity-0 -translate-y-2"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 class="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden">
+
+                <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-700">
+                    <p class="text-xs font-semibold text-slate-800 dark:text-white truncate">{{ $u->name }}</p>
+                    <p class="text-[10px] text-slate-400 truncate mt-0.5">{{ $u->email }}</p>
+                    <span class="inline-block mt-1.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold {{ $u->account_type_color }}">
+                        {{ $u->account_type_label }}
+                    </span>
+                </div>
+
+                <a href="{{ route('profil.edit') }}"
+                   class="block px-4 py-2.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                    Profil Saya
+                </a>
+
+                <form action="{{ route('logout') }}" method="POST" class="border-t border-slate-100 dark:border-slate-700">
+                    @csrf
+                    <button type="submit"
+                            class="w-full text-left px-4 py-2.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors cursor-pointer">
+                        Keluar
+                    </button>
+                </form>
+            </div>
+        </div>
     </header>
 
-    <!-- Breadcrumb -->
-    @hasSection('breadcrumb_title')
-    <div class="px-4 pt-4 text-[11px] text-slate-400 flex items-center gap-1.5">
-        <a href="{{ route('beranda') }}" class="hover:text-slate-600 dark:hover:text-slate-300">Beranda</a>
-        <span>/</span>
-        <span class="text-slate-800 dark:text-slate-200 font-semibold">@yield('breadcrumb_title')</span>
-    </div>
-    @endif
+    <main class="flex-1 p-4 md:p-6">
 
-    <main class="flex-1 p-4">
-        @if(session('success'))
-            <div class="erp-card !p-3 mb-4 border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 text-xs font-medium">
-                {{ session('success') }}
-            </div>
-        @endif
-        @if(session('error'))
-            <div class="erp-card !p-3 mb-4 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 text-xs font-medium">
-                {{ session('error') }}
-            </div>
-        @endif
+        {{-- Pesan kilat dan banner ikut kolom yang sama dengan kontennya, kalau
+             tidak tepi kirinya tidak pernah bertemu dengan kartu di bawahnya. --}}
+        <div class="@yield('lebar', 'max-w-7xl mx-auto') w-full">
+            @if(session('success'))
+                <div class="erp-card !p-3 mb-4 border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 text-xs font-medium">
+                    {{ session('success') }}
+                </div>
+            @endif
+            @if(session('error'))
+                <div class="erp-card !p-3 mb-4 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 text-xs font-medium">
+                    {{ session('error') }}
+                </div>
+            @endif
 
-        @include('partials.lihat-sebagai-bar')
-        @include('partials.maintenance-banner')
+            @include('partials.lihat-sebagai-bar')
+            @include('partials.maintenance-banner')
+        </div>
 
-        @yield('content')
+        {{-- Lebar konten ditentukan halamannya sendiri lewat @section('lebar').
+
+             Bawaannya kolom terpusat 'max-w-7xl mx-auto'. Ini BUKAN sekadar
+             selera: tanpa sidebar, konten yang dibiarkan selebar layar terus
+             melar di monitor lebar sampai kolom keempat kartu terpotong di tepi
+             kanan — dan karena grid-nya tetap empat kolom, seluruh isinya
+             tampak bergeser ke kiri walau tiap kartunya sudah rata tengah.
+
+             HEADER sengaja TIDAK ikut kolom ini; ia tetap mentok kiri-kanan
+             (ketentuan pemilik produk). Jangan membungkus header dengan
+             `max-w-*`.
+
+             Halaman formulir mempersempitnya lagi jadi 'max-w-2xl mx-auto'. --}}
+        <div class="@yield('lebar', 'max-w-7xl mx-auto') w-full">
+
+            {{-- Tombol kembali, di ATAS judul dan rata kiri dengan kartunya —
+                 urutan yang sama dengan halaman create di ERP. Muncul hanya bila
+                 halamannya menyebutkan tujuannya; halaman daftar tidak punya
+                 "kembali ke" yang masuk akal. --}}
+            @hasSection('kembali_url')
+                <a href="@yield('kembali_url')"
+                   class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors mb-4">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Kembali ke @yield('kembali_label')
+                </a>
+            @endif
+
+            {{-- Judul halaman pindah ke sini dari header: tempatnya di header
+                 sekarang dipakai menu. --}}
+            @hasSection('page_title')
+                <div class="mb-5 text-center">
+                    <h1 class="text-lg font-bold text-slate-800 dark:text-white">@yield('page_title')</h1>
+                    @hasSection('page_subtitle')
+                        <p class="text-xs text-slate-400 mt-1">@yield('page_subtitle')</p>
+                    @endif
+                </div>
+            @endif
+
+            @yield('content')
+        </div>
     </main>
 
     <footer class="px-4 py-5 text-center text-[10px] text-slate-400 border-t border-slate-200 dark:border-slate-800">

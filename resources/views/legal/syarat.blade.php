@@ -1,7 +1,6 @@
 @extends(auth()->check() ? 'layouts.app' : 'layouts.public')
 @section('title', 'Syarat & Ketentuan')
 @section('page_title', 'Syarat & Ketentuan')
-@section('breadcrumb_title', 'Syarat & Ketentuan')
 
 @section('content')
 <div class="erp-card space-y-5">

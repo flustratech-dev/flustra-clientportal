@@ -179,6 +179,11 @@
                         </div>
 
                         <div class="space-y-2.5">
+                            {{-- Muncul hanya bila GOOGLE_CLIENT_ID & SECRET terisi. Di
+                                 lingkungan yang belum punya OAuth client, rute
+                                 google.redirect membalas 404 — tombol yang sudah pasti
+                                 gagal lebih buruk daripada tidak ada tombol. --}}
+                            @if($googleAktif ?? false)
                             <a href="{{ route('google.redirect') }}" class="w-full py-2.5 rounded-full bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-white border border-slate-200 dark:border-slate-600 font-semibold text-xs md:text-sm flex items-center justify-center gap-2 transition-all shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/10 cursor-pointer">
                                 <svg class="w-4 h-4" viewBox="0 0 24 24">
                                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -188,6 +193,7 @@
                                 </svg>
                                 Masuk dengan Google
                             </a>
+                            @endif
 
                             <a href="{{ route('welcome') }}" class="w-full py-2.5 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs md:text-sm flex items-center justify-center gap-2 transition-all border border-slate-200/50 dark:border-slate-700 shadow-sm">
                                 <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
@@ -312,6 +318,7 @@
                         </div>
 
                         <div class="space-y-2">
+                            @if($googleAktif ?? false)
                             <a href="{{ route('google.redirect') }}" class="w-full py-2 rounded-full bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-white border border-slate-200 dark:border-slate-600 font-semibold text-xs md:text-sm flex items-center justify-center gap-2 transition-all shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/10 cursor-pointer">
                                 <svg class="w-4 h-4" viewBox="0 0 24 24">
                                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -321,6 +328,7 @@
                                 </svg>
                                 Daftar dengan Google
                             </a>
+                            @endif
 
                             <a href="{{ route('welcome') }}" class="w-full py-2 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs flex items-center justify-center gap-2 transition-all border border-slate-200/50 dark:border-slate-700 shadow-sm">
                                 <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>

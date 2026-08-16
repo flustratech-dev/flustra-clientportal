@@ -1,7 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Kondisi Portal')
 @section('page_title', 'Kondisi Portal')
-@section('breadcrumb_title', 'Admin')
 
 @section('content')
 <div class="space-y-5">

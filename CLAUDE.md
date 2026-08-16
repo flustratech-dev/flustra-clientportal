@@ -173,6 +173,11 @@ Ketentuan pemilik produk: **samakan persis dengan `flustra-erp`.** Jangan
 mendesain ulang, jangan "memodernkan", jangan meniru `flustra-adminpanel`
 (project itu memakai token tema tweakcn yang berbeda — jangan tertukar).
 
+> **Satu pengecualian, diputuskan 16 Agustus 2026: portal tidak punya sidebar.**
+> Seluruh menu ada di header. Selain itu — warna, font, kelas CSS, mode gelap,
+> bentuk kartu dan formulir — tetap mengikuti ERP persis. Rinciannya di
+> [Kerangka tata letak](#kerangka-tata-letak) di bawah.
+
 ### Berkas yang disalin apa adanya
 
 ```
@@ -218,14 +223,57 @@ ERP — supaya markup bisa disalin bolak-balik antar-project tanpa penyesuaian.
 
 ### Kerangka tata letak
 
+**Tanpa sidebar (keputusan pemilik produk, 16 Agustus 2026).** Menunya pindah ke
+header. Ini satu-satunya tempat portal sengaja berbeda dari `flustra-erp`; sisa
+§6 tetap berlaku apa adanya.
+
 | Elemen | Spesifikasi |
 | --- | --- |
-| Sidebar desktop | `fixed inset-y-0 left-0 w-52 hidden md:flex`, posisi gulir disimpan di `sessionStorage` |
-| Bottom nav mobile | `fixed bottom-0 h-16 flex md:hidden` — Beranda · Layanan · Riwayat · Notifikasi · Profil |
+| Header | `sticky top-0 h-14` — logo · menu mendatar (`hidden md:flex`) · cari · lonceng · tema · **dropdown avatar**. **Mentok kiri-kanan** (`px-4`), tidak ikut kolom terpusat mana pun — ketentuan pemilik produk, jangan dibungkus `max-w-*` |
+| Rata tengah | Judul halaman, sapaan beranda, label kelompok layanan, dan **isi setiap kartu** rata tengah. Di kartu layanan, lencana kunci/SEGERA dipojokkan `absolute top-3 right-3` — kalau didudukkan sebaris dengan ikon, kartu yang punya lencana menggeser ikonnya keluar dari tengah |
+| Profil | **hanya** di dropdown avatar kanan header, pola ERP. Sengaja tidak ikut di daftar menu: dua pintu ke satu halaman membuat orang ragu mana yang benar |
+| Bottom nav mobile | `fixed bottom-0 h-16 flex md:hidden` — Beranda · Riwayat · Notifikasi · Bantuan (+ Kondisi Portal untuk admin) |
 | Panel mobile | sheet `rounded-t-3xl max-h-[85vh]` naik dari bawah |
-| Body | `min-h-screen flex flex-col md:flex-row pb-16 md:pb-0` |
+| Body | `min-h-screen flex flex-col pb-16 md:pb-0` — tanpa `md:flex-row`, tanpa `md:ml-52` |
+| Judul halaman | dirender layout dari `@section('page_title')`, di dalam `<main>` — bukan lagi di header, tempatnya sekarang dipakai menu |
 | Notifikasi | polling 30 detik, dijeda lewat Page Visibility API saat tab tidak aktif |
 | Meta wajib | `<meta name="google" content="notranslate">` — auto-translate Chrome merusak atribut `x-data` |
+
+### Halaman formulir — kartu di tengah + tombol kembali
+
+Halaman create/edit mengikuti bentuk halaman create di ERP
+(`resources/views/hr/employees/create.blade.php`): tombol kembali di atas,
+lalu judul, lalu kartunya — semuanya dalam kolom terpusat.
+
+Layout yang merenderkan ketiganya; halaman cukup menyebutkan empat section:
+
+```blade
+@section('page_title', 'Kirim Tagihan')
+@section('page_subtitle', 'Tagihkan purchase order yang sudah Anda sanggupi.')
+@section('lebar', 'max-w-2xl mx-auto')
+@section('kembali_url', route('vendor.po.index'))
+@section('kembali_label', 'Purchase Order')
+```
+
+`lebar` bawaannya `w-full` — halaman daftar tidak perlu menyebutkannya. Tombol
+kembali hanya muncul bila `kembali_url` ada; halaman daftar memang tidak punya
+"kembali ke" yang masuk akal.
+
+**Jangan menaruh tombol kembali sendiri di dalam `@section('content')`.** Ia akan
+jatuh di bawah judul, bukan di atasnya, dan bentuknya berbeda dari halaman lain.
+
+### Dropdown di header: `@click.outside` di panel, bukan di pembungkus
+
+Dipasang di pembungkus, klik pada tombol pemicunya sendiri ikut menutup panel
+seketika sehingga dropdown-nya tidak pernah sempat terlihat. Lonceng notifikasi
+sudah memakai pola yang benar sejak awal; ikuti itu.
+
+Satu hal yang menyesatkan saat menguji: dropdown-dropdown ini memakai
+`x-transition`, dan transisi Alpine bergantung pada `requestAnimationFrame`. Di
+tab yang tidak merender frame (headless, atau pane yang tersembunyi) rAF tidak
+pernah berjalan, jadi panelnya **macet di `display: none`** walau state-nya sudah
+`true`. Itu artefak lingkungan uji, bukan bug — periksa
+`document.visibilityState` sebelum menelusuri lebih jauh.
 
 **Tidak** dibawa dari ERP: pencarian global Ctrl+K (tunda ke Fase 5), modul chat,
 banner maintenance internal.
@@ -249,6 +297,49 @@ Di `flustra-erp` ada beberapa view lama yang masih merangkai kelas saat runtime
 (quotations, sales-orders, invoices, inventory, tasks, pipeline CRM). Di sana
 masalahnya ditambal dengan blok `@source inline(...)` di `resources/css/app.css`.
 Portal ini **tidak** memakai tambalan itu — pakai accessor sejak awal.
+
+### Jebakan Vite yang nyata — halaman kosong tanpa pesan galat
+
+**Gejala:** halaman terbuka, latar dan logo muncul, tapi isinya hilang. Tidak ada
+galat di layar, `php artisan test` tetap hijau, dan `npm run build` baik-baik
+saja. Yang terjadi: kartu login mengempis jadi setinggi 2 piksel karena utilitas
+seperti `min-h-[550px]` tidak ada di CSS yang dimuat.
+
+**Sebabnya bukan di portal ini.** Di mesin pengembangan ada banyak project
+Laravel yang jalan bersamaan, dan Vite bawaannya memakai port 5173 lalu
+diam-diam pindah ke 5174, 5175, dst. bila port itu terpakai. Urutan kejadiannya:
+
+1. Portal start lebih dulu, mendapat 5173, menulisnya ke `public/hot`.
+2. Portal dimatikan paksa — `public/hot` **tidak ikut terhapus** (Vite hanya
+   membersihkannya saat berhenti dengan rapi).
+3. Project lain start, mengambil 5173 yang sekarang kosong.
+4. Halaman portal memuat CSS dan JS milik project itu. Karena dua-duanya
+   memakai Tailwind, utilitas umum seperti `flex` tetap ada — halamannya
+   tampak "hampir benar", dan itulah yang membuatnya sulit dikenali.
+
+**Penjagaannya sudah dipasang** di `vite.config.js`: port dipatok **5108**
+dengan `strictPort: true`, jadi Vite gagal dengan jelas alih-alih mengembara.
+Konvensinya `5100 + dua digit terakhir port aplikasi` (portal 8008 → 5108).
+
+**Kalau gejalanya muncul lagi**, periksa dulu siapa pemilik portnya:
+
+```bash
+cat public/hot
+```
+
+Isinya harus `http://localhost:5108`. Kalau berbeda — atau berkasnya ada
+padahal `npm run all` tidak sedang jalan — hapus saja:
+
+```bash
+rm public/hot
+```
+
+Portal langsung kembali memakai aset hasil `npm run build` di `public/build`.
+
+Satu hal terkait di `resources/css/app.css`: portal **tidak** memindai
+`storage/framework/views/*.php` seperti ERP. Alasannya ditulis di berkas itu —
+singkatnya, `vite.config.js` justru menyuruh watcher mengabaikan folder yang
+sama, dan `php artisan view:clear` mengosongkannya.
 
 ### Jebakan Blade yang nyata
 

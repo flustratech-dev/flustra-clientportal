@@ -1,7 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Retur & Selisih')
 @section('page_title', 'Retur & Selisih')
-@section('breadcrumb_title', 'Retur & Selisih')
 
 @section('content')
 <div class="space-y-5 max-w-3xl">

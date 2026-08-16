@@ -7,7 +7,6 @@
 @extends($masuk ? 'layouts.app' : 'layouts.public')
 @section('title', 'Bantuan')
 @section('page_title', 'Bantuan')
-@section('breadcrumb_title', 'Bantuan')
 
 @section('content')
 <div class="space-y-5 max-w-2xl">
@@ -37,15 +36,20 @@
         @endif
 
         @if($email)
-        <a href="mailto:{{ $email }}"
-           class="erp-card floating-card flex items-center gap-3 hover:border-blue-300 dark:hover:border-blue-700">
-            <span class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+        <a href="https://mail.google.com/mail/?view=cm&fs=1&to={{ urlencode($email) }}" target="_blank" rel="noopener noreferrer"
+           class="erp-card floating-card flex items-center gap-3 hover:border-blue-300 dark:hover:border-blue-700 cursor-pointer group">
+            <span class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                 </svg>
             </span>
-            <span class="min-w-0">
-                <span class="block text-xs font-bold text-slate-800 dark:text-white">Email</span>
+            <span class="min-w-0 flex-1">
+                <span class="block text-xs font-bold text-slate-800 dark:text-white flex items-center gap-1.5">
+                    Email
+                    <svg class="w-3 h-3 text-slate-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                    </svg>
+                </span>
                 <span class="block text-[11px] text-slate-500 truncate">{{ $email }}</span>
             </span>
         </a>

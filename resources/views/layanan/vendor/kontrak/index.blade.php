@@ -1,7 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Kontrak & Dokumen')
 @section('page_title', 'Kontrak & Dokumen')
-@section('breadcrumb_title', 'Kontrak')
 
 @section('content')
 <div class="space-y-5 max-w-3xl">

@@ -1,7 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Kredit & Plafon')
 @section('page_title', 'Kredit & Plafon')
-@section('breadcrumb_title', 'Kredit & Plafon')
 
 @section('content')
 <div class="space-y-5 max-w-2xl">

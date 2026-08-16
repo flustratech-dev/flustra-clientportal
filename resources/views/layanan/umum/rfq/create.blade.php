@@ -1,10 +1,13 @@
 @extends('layouts.app')
 @section('title', 'Minta Penawaran')
 @section('page_title', 'Minta Penawaran')
-@section('breadcrumb_title', 'Minta Penawaran')
+@section('page_subtitle', 'Ceritakan kebutuhan Anda, tim penjualan kami yang menyiapkan penawarannya.')
+@section('lebar', 'max-w-2xl mx-auto')
+@section('kembali_url', route('beranda'))
+@section('kembali_label', 'Beranda')
 
 @section('content')
-<div class="space-y-5 max-w-2xl">
+<div class="space-y-5">
 
     @include('partials.erp-offline')
 

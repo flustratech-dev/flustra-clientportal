@@ -1,10 +1,13 @@
 @extends('layouts.app')
 @section('title', 'Ajukan Retur')
 @section('page_title', 'Ajukan Retur')
-@section('breadcrumb_title', 'Ajukan Retur')
+@section('page_subtitle', 'Ajukan pengembalian barang atas tagihan yang sudah Anda terima.')
+@section('lebar', 'max-w-2xl mx-auto')
+@section('kembali_url', route('layanan.tagihan.index'))
+@section('kembali_label', 'Tagihan')
 
 @section('content')
-<div class="space-y-5 max-w-2xl">
+<div class="space-y-5">
 
     @include('partials.erp-offline')
 

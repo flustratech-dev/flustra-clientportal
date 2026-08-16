@@ -1,10 +1,12 @@
 @extends('layouts.app')
 @section('title', 'Rincian Tagihan')
 @section('page_title', 'Rincian Tagihan')
-@section('breadcrumb_title', 'Rincian Tagihan')
+@section('lebar', 'max-w-3xl mx-auto')
+@section('kembali_url', route('layanan.tagihan.index'))
+@section('kembali_label', 'Tagihan')
 
 @section('content')
-<div class="space-y-5 max-w-3xl">
+<div class="space-y-5">
 
     @include('partials.erp-offline')
 

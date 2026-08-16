@@ -1,10 +1,13 @@
 @extends('layouts.app')
 @section('title', 'Ajukan Kerja Sama')
 @section('page_title', 'Ajukan Kerja Sama')
-@section('breadcrumb_title', 'Kerja Sama')
+@section('page_subtitle', 'Buka layanan pelanggan atau vendor dengan satu bukti kemitraan.')
+@section('lebar', 'max-w-2xl mx-auto')
+@section('kembali_url', route('beranda'))
+@section('kembali_label', 'Beranda')
 
 @section('content')
-<div class="space-y-5 max-w-2xl">
+<div class="space-y-5">
 
     <div class="erp-card !p-3.5 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30">
         <p class="text-xs text-blue-700 dark:text-blue-400 leading-relaxed">

@@ -1,10 +1,13 @@
 @extends('layouts.app')
 @section('title', 'Perbarui Data Perusahaan')
 @section('page_title', 'Perbarui Data Perusahaan')
-@section('breadcrumb_title', 'Data Perusahaan')
+@section('page_subtitle', 'Ajukan perubahan data; tim kami memeriksanya sebelum berlaku.')
+@section('lebar', 'max-w-2xl mx-auto')
+@section('kembali_url', route('beranda'))
+@section('kembali_label', 'Beranda')
 
 @section('content')
-<div class="space-y-5 max-w-2xl">
+<div class="space-y-5">
 
     @include('partials.erp-offline')
 

@@ -1,7 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Profil')
 @section('page_title', 'Profil')
-@section('breadcrumb_title', 'Profil')
 
 @section('content')
 <div class="space-y-5 max-w-3xl" x-data="{ tab: 'akun' }">

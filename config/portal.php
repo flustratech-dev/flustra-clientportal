@@ -94,7 +94,7 @@ return [
     'signed_url_minutes'  => (int) env('PORTAL_SIGNED_URL_MINUTES', 5),
 
     'contact' => [
-        'email'    => env('PORTAL_CONTACT_EMAIL'),
+        'email'    => env('PORTAL_CONTACT_EMAIL', 'flustratechcompany@gmail.com'),
         'whatsapp' => env('PORTAL_CONTACT_WHATSAPP'),
     ],
 

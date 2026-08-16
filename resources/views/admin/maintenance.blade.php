@@ -1,7 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Pengumuman')
 @section('page_title', 'Pengumuman')
-@section('breadcrumb_title', 'Admin')
 
 @section('content')
 <div class="space-y-5 max-w-2xl">

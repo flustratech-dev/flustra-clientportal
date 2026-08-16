@@ -1,10 +1,13 @@
 @extends('layouts.app')
 @section('title', 'Kirim Tagihan')
 @section('page_title', 'Kirim Tagihan')
-@section('breadcrumb_title', 'Kirim Tagihan')
+@section('page_subtitle', 'Tagihkan purchase order yang sudah Anda sanggupi.')
+@section('lebar', 'max-w-2xl mx-auto')
+@section('kembali_url', route('vendor.po.index'))
+@section('kembali_label', 'Purchase Order')
 
 @section('content')
-<div class="space-y-5 max-w-2xl">
+<div class="space-y-5">
 
     @include('partials.erp-offline')
 

@@ -1,7 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Status Pembayaran')
 @section('page_title', 'Status Pembayaran')
-@section('breadcrumb_title', 'Status Pembayaran')
 
 @section('content')
 <div class="space-y-5">

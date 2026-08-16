@@ -1,12 +1,12 @@
 @extends('layouts.app')
 @section('title', 'Detail Pengajuan')
 @section('page_title', 'Detail Pengajuan')
-@section('breadcrumb_title', $submission->reference_number)
+@section('lebar', 'max-w-3xl mx-auto')
+@section('kembali_url', route('riwayat.index'))
+@section('kembali_label', 'Riwayat')
 
 @section('content')
-<div class="space-y-5 max-w-3xl">
-
-    <a href="{{ route('riwayat.index') }}" class="btn-secondary">&larr; Kembali ke riwayat</a>
+<div class="space-y-5">
 
     {{-- Alasan penolakan ditaruh paling atas: itu hal pertama yang dicari
          pengguna saat pengajuannya ditolak. --}}
