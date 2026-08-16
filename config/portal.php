@@ -95,7 +95,7 @@ return [
 
     'contact' => [
         'email'    => env('PORTAL_CONTACT_EMAIL', 'flustratechcompany@gmail.com'),
-        'whatsapp' => env('PORTAL_CONTACT_WHATSAPP'),
+        'whatsapp' => env('PORTAL_CONTACT_WHATSAPP', '082277271822'),
     ],
 
 ];

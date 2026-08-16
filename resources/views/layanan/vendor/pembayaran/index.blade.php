@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Status Pembayaran')
 @section('page_title', 'Status Pembayaran')
+@section('lebar', 'max-w-5xl mx-auto')
 
 @section('content')
 <div class="space-y-5">

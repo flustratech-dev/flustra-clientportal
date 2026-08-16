@@ -1,9 +1,10 @@
 @extends('layouts.app')
 @section('title', 'Dokumen Pengiriman')
 @section('page_title', 'Dokumen Pengiriman')
+@section('lebar', 'max-w-2xl mx-auto')
 
 @section('content')
-<div class="space-y-5 max-w-2xl">
+<div class="space-y-5 max-w-2xl mx-auto">
 
     @include('partials.erp-offline')
 

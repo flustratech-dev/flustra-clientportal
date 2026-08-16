@@ -1,9 +1,10 @@
 @extends('layouts.app')
 @section('title', 'Retur & Selisih')
 @section('page_title', 'Retur & Selisih')
+@section('lebar', 'max-w-3xl mx-auto')
 
 @section('content')
-<div class="space-y-5 max-w-3xl">
+<div class="space-y-5 max-w-3xl mx-auto">
 
     @include('partials.erp-offline')
 

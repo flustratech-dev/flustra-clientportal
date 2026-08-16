@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Riwayat & Status')
 @section('page_title', 'Riwayat & Status')
+@section('lebar', 'max-w-5xl mx-auto')
 
 @section('content')
 <div class="space-y-5">

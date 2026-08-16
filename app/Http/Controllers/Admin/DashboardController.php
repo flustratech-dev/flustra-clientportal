@@ -105,6 +105,17 @@ class DashboardController extends Controller
     }
 
     /**
+     * Hapus / bersihkan seluruh riwayat log lalu lintas API.
+     */
+    public function hapusLog(): RedirectResponse
+    {
+        $jumlah = ApiSyncLog::count();
+        ApiSyncLog::truncate();
+
+        return back()->with('success', 'Riwayat lalu lintas log ('.$jumlah.' entri) berhasil dibersihkan.');
+    }
+
+    /**
      * Ketuk ERP untuk memastikan sambungannya hidup.
      *
      * Memakai endpoint lowongan karena itu satu-satunya yang tidak butuh

@@ -1,9 +1,10 @@
 @extends('layouts.app')
 @section('title', 'Notifikasi')
 @section('page_title', 'Notifikasi')
+@section('lebar', 'max-w-2xl mx-auto')
 
 @section('content')
-<div class="space-y-4 max-w-2xl">
+<div class="space-y-4 max-w-2xl mx-auto">
 
     @if($notifications->isNotEmpty())
         <form action="{{ route('notifikasi.read-all') }}" method="POST" class="flex justify-end">

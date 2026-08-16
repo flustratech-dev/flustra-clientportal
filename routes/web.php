@@ -263,6 +263,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/pengajuan/antre-ulang-semua', [AdminDashboardController::class, 'antreUlangSemua'])
             ->name('antre-ulang-semua');
 
+        Route::delete('/log/hapus', [AdminDashboardController::class, 'hapusLog'])->name('log.hapus');
+
         Route::get('/pengumuman', [AdminMaintenanceController::class, 'edit'])->name('maintenance');
         Route::put('/pengumuman', [AdminMaintenanceController::class, 'update'])->name('maintenance.update');
 

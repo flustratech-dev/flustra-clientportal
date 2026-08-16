@@ -1,9 +1,10 @@
 @extends('layouts.app')
 @section('title', 'Profil')
 @section('page_title', 'Profil')
+@section('lebar', 'max-w-3xl mx-auto')
 
 @section('content')
-<div class="space-y-5 max-w-3xl" x-data="{ tab: 'akun' }">
+<div class="space-y-5 max-w-3xl mx-auto" x-data="{ tab: 'akun' }">
 
     {{-- Tab --}}
     <div class="flex gap-1 p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 w-fit">

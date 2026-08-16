@@ -1,9 +1,10 @@
 @extends('layouts.app')
 @section('title', 'Lihat Sebagai')
 @section('page_title', 'Lihat Sebagai')
+@section('lebar', 'max-w-3xl mx-auto')
 
 @section('content')
-<div class="space-y-5 max-w-3xl">
+<div class="space-y-5 max-w-3xl mx-auto">
 
     <a href="{{ route('admin.dashboard') }}" class="btn-secondary">&larr; Kondisi Portal</a>
 
