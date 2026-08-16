@@ -304,6 +304,39 @@ Di `flustra-erp` ada beberapa view lama yang masih merangkai kelas saat runtime
 masalahnya ditambal dengan blok `@source inline(...)` di `resources/css/app.css`.
 Portal ini **tidak** memakai tambalan itu — pakai accessor sejak awal.
 
+### Jebakan produksi — halaman polos tanpa CSS di balik HTTPS
+
+**Gejala:** di server produksi halaman terbuka, HTML-nya benar, tapi tanpa satu
+pun gaya — logo tampil raksasa. Console peramban penuh **`Mixed Content: … was
+loaded over HTTPS, but requested an insecure stylesheet http://…`**.
+
+**Sebabnya bukan aset.** TLS diputus di proxy Coolify lalu diteruskan ke
+container sebagai HTTP biasa, jadi Laravel percaya dirinya diakses lewat http
+dan membuat seluruh URL aset `http://…`. Peramban memblokirnya.
+
+**Penjagaannya sudah dipasang** di `bootstrap/app.php`:
+
+```php
+$middleware->trustProxies(at: '*');
+```
+
+Aman karena container tidak pernah terekspos langsung ke internet — satu-satunya
+jalan masuk adalah proxy Coolify.
+
+Yang ikut diperbaiki baris itu, dan justru lebih penting daripada CSS-nya:
+**`$request->ip()` sekarang mengembalikan IP pengunjung, bukan IP proxy.** Tanpa
+itu, `throttle` menghitung seluruh pengguna sebagai satu alamat, `last_login_ip`
+mencatat alamat yang salah, dan `actor_ip` pada persetujuan kontrak — bentuk
+final pengganti tanda tangan (§3 nomor 5) — kehilangan artinya.
+
+Dikunci dua uji di `tests/Feature/DiBelakangProxyTest.php`. Jangan hapus
+`trustProxies` tanpa mengganti keduanya.
+
+> ERP memakai cara lain untuk masalah yang sama: `URL::forceScheme('https')` di
+> `AppServiceProvider`. Itu membetulkan URL tapi **tidak** membetulkan
+> `$request->ip()` — jadi `portal_api_logs.ip_address` di ERP masih mencatat IP
+> proxy.
+
 ### Jebakan Vite yang nyata — halaman kosong tanpa pesan galat
 
 **Gejala:** halaman terbuka, latar dan logo muncul, tapi isinya hilang. Tidak ada
