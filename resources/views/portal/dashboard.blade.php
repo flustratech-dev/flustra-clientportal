@@ -5,7 +5,7 @@
 
 @section('content')
 
-<div class="space-y-5">
+<div class="space-y-6">
 
     {{-- Sapaan --}}
     <div class="flex flex-wrap items-center justify-center gap-2">
@@ -17,7 +17,7 @@
 
     {{-- Banner aksi: hanya muncul kalau memang ada yang perlu ditindaklanjuti --}}
     @if($pendingClaim)
-        <div class="erp-card !p-3.5 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 flex flex-col items-center text-center gap-3">
+        <div class="erp-card !p-3.5 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 flex flex-col items-center text-center gap-3 max-w-3xl mx-auto">
             <p class="text-xs text-amber-700 dark:text-amber-400">
                 <strong>Pengajuan kerja sama Anda sedang diperiksa.</strong>
                 Kami akan mengabari begitu tim selesai mencocokkan data {{ $pendingClaim->company_name }}.
@@ -25,7 +25,7 @@
             <a href="{{ route('riwayat.index') }}" class="btn-secondary shrink-0">Lihat status</a>
         </div>
     @elseif($u->isUmum() && $rejectedClaim)
-        <div class="erp-card !p-3.5 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 flex flex-col items-center text-center gap-3">
+        <div class="erp-card !p-3.5 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 flex flex-col items-center text-center gap-3 max-w-3xl mx-auto">
             <p class="text-xs text-red-700 dark:text-red-400">
                 <strong>Pengajuan sebelumnya belum bisa kami setujui.</strong>
                 {{ $rejectedClaim->rejected_reason ?: 'Silakan periksa kembali bukti yang Anda lampirkan.' }}
@@ -34,7 +34,7 @@
             <a href="{{ route('mitra.create') }}" class="btn-primary shrink-0">Ajukan ulang</a>
         </div>
     @elseif($u->isUmum())
-        <div class="erp-card !p-3.5 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 flex flex-col items-center text-center gap-3">
+        <div class="erp-card !p-3.5 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 flex flex-col items-center text-center gap-3 max-w-3xl mx-auto">
             <p class="text-xs text-blue-700 dark:text-blue-400">
                 <strong>Buka layanan penuh.</strong>
                 Ajukan verifikasi sebagai pelanggan atau vendor untuk melihat tagihan, penawaran, dan pengiriman Anda.
@@ -46,7 +46,7 @@
     {{-- Verifikasi email. Tidak memblokir apa pun kecuali pengajuan klaim
          mitra — di situlah identitas mulai berarti. --}}
     @unless($u->email_verified_at)
-        <div class="erp-card !p-3.5 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 flex flex-col items-center text-center gap-3">
+        <div class="erp-card !p-3.5 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 flex flex-col items-center text-center gap-3 max-w-3xl mx-auto">
             <p class="text-xs text-amber-700 dark:text-amber-400">
                 <strong>Verifikasi email Anda.</strong>
                 Kami perlu memastikan {{ $u->email }} benar milik Anda sebelum pengajuan kerja sama bisa diproses.
@@ -60,7 +60,7 @@
 
     {{-- Ringkasan --}}
     @if($stats['total'] > 0)
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 max-w-4xl mx-auto">
         @foreach([
             ['Sedang Diproses', $stats['diproses'], 'text-amber-500'],
             ['Disetujui Bulan Ini', $stats['disetujui'], 'text-emerald-500'],
@@ -78,9 +78,9 @@
     {{-- Grid layanan --}}
     @foreach($services as $group => $items)
         <div>
-            <h2 class="erp-label !text-[11px] mb-2 text-center">{{ $group }}</h2>
+            <h2 class="erp-label !text-[11px] mb-2.5 text-center">{{ $group }}</h2>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            <div class="flex flex-wrap justify-center gap-3">
                 @foreach($items as $item)
                     @php
                         $terkunci = $item['locked'];
@@ -88,7 +88,7 @@
                         $aktif    = ! $terkunci && ! $segera;
                     @endphp
 
-                    <div x-data="{ pesan: false }" class="relative">
+                    <div x-data="{ pesan: false }" class="relative w-full sm:w-[calc(50%-0.375rem)] lg:w-[calc(33.333%-0.5rem)] xl:w-[calc(25%-0.5625rem)]">
                         <a @if($aktif) href="{{ route($item['route']) }}" @else href="#" @click.prevent="pesan = true" @endif
                            class="erp-card relative block h-full text-center transition-all {{ $aktif ? 'floating-card hover:border-blue-300 dark:hover:border-blue-700' : 'opacity-60 cursor-help' }}">
 
@@ -138,9 +138,9 @@
 
     {{-- Aktivitas terakhir --}}
     @if($recent->isNotEmpty())
-    <div>
+    <div class="max-w-4xl mx-auto">
         <div class="flex flex-col items-center gap-1 mb-2">
-            <h2 class="erp-label !text-[11px] !mb-0">Aktivitas Terakhir</h2>
+            <h2 class="erp-label !text-[11px] !mb-0 text-center">Aktivitas Terakhir</h2>
             <a href="{{ route('riwayat.index') }}" class="text-[11px] text-blue-500 hover:underline">Lihat semua</a>
         </div>
 
