@@ -103,6 +103,7 @@
     cariNaik()  { if (this.cariHasil.length) this.cariPilih = (this.cariPilih - 1 + this.cariHasil.length) % this.cariHasil.length; },
     cariBuka2() { const h = this.cariHasil[this.cariPilih]; if (h) window.location.href = h.url; }
 }"
+      @tema-luar.window="darkMode = $event.detail.gelap"
       @keydown.window.ctrl.k.prevent="bukaCari()"
       @keydown.window.meta.k.prevent="bukaCari()">
 <head>
@@ -112,20 +113,19 @@
          (mengecilkan huruf kunci, mengubah "/" jadi spasi), yang merusak JSON
          inline dan mematikan seluruh komponen Alpine di halaman ini. --}}
     <meta name="google" content="notranslate">
+    {{-- Ikon tab. Naikkan ?v= setiap kali berkasnya diganti: favicon di-cache
+         peramban jauh lebih lengket daripada aset biasa. --}}
+    <link rel="icon" href="{{ asset('favicon.ico') }}?v=3" sizes="any">
+    {{-- Ikon layar utama iOS. Sengaja persegi penuh: iOS mengabaikan transparansi
+         dan memasang mask sudut membulatnya sendiri, jadi badge bersudut transparan
+         justru tampil dengan sudut hitam. --}}
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}?v=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Beranda') &middot; {{ config('app.name') }}</title>
 
     <script src="{{ asset('vendor/sweetalert2/sweetalert2.all.min.js') }}"></script>
 
-    {{-- Cegah kedip putih saat halaman dimuat ulang dalam mode gelap. Harus
-         berjalan SEBELUM @vite, sebelum ada apa pun yang tergambar. --}}
-    <script>
-        if (localStorage.getItem('darkMode') === 'true') {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-    </script>
+    @include('partials.tema')
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>

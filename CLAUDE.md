@@ -165,6 +165,22 @@ mengembalikan 200 dengan data lama bila referensi itu sudah pernah masuk. Jadi
 aman mengirim ulang saat respons tidak sampai — jangan menambah pencegahan
 duplikat sendiri di portal.
 
+**Pencabutan akses (21 Agustus 2026).** ERP sekarang punya tombol **Cabut
+Akses** di halaman klaim yang sudah terverifikasi
+(`PortalPartnerController::revokeClaim`). Ia mengirim webhook `partner.revoked`
+yang selama ini sudah ditangani portal tapi tidak pernah ada yang mengirimnya —
+sebelum ini, akses mitra praktis permanen begitu klaimnya disetujui. Status
+klaim di ERP jadi `revoked`, dan `PortalPartnerResolver` menolak permintaan
+berikutnya tanpa menunggu cache apa pun kedaluwarsa.
+
+**Uji di sisi ERP (21 Agustus 2026).** Kontrak ini kini dijaga dari dua sisi:
+`flustra-erp/tests/Feature/PortalApiTest.php` (11 uji — penjaga token, isolasi
+antar-mitra, penyaringan data internal, idempotensi, rekonsiliasi) dan
+`PortalKabarStafTest.php` (9 uji — setiap keputusan staf memanggil
+`PortalNotifier`, dan setiap kiriman mitra mendarat di layar serta kotak
+notifikasi orang yang berhak). Sebelumnya seluruh uji integrasi hidup di portal
+dan semuanya bicara dengan ERP palsu.
+
 ---
 
 ## 6. UI/UX — salin persis dari flustra-erp
@@ -797,23 +813,31 @@ Panduan deploy lengkapnya:
 
 ### Yang BELUM ada
 
-Satu hal, dan itu pun hanya menunggu kredensial:
+Tidak ada lagi pekerjaan kode yang tertunda di portal. Yang tersisa hanya satu
+langkah di luar repo:
 
-1. **Kredensial OAuth Google.** Kodenya **sudah terpasang** —
-   `Public\GoogleAuthController`, rute `/masuk/google`, tombol di halaman masuk
-   dan daftar, dan 8 uji di `tests/Feature/LoginGoogleTest.php`. Yang belum ada
-   hanya `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` di `.env`.
+1. **Pendaftaran redirect URI Google.** `GOOGLE_CLIENT_ID` dan
+   `GOOGLE_CLIENT_SECRET` **sudah terisi** di keempat berkas env (client OAuth
+   yang sama dengan `flustra-erp`), jadi kalimat lama "kredensialnya belum ada"
+   sudah tidak berlaku. Yang harus dipastikan tinggal: alamat balikan portal —
+   nilai `GOOGLE_REDIRECT_URI` di tiap berkas env — terdaftar **persis** seperti
+   tertulis (skema, host, tanpa trailing slash) di client tersebut. Kalau belum,
+   gejalanya `redirect_uri_mismatch` di halaman Google, bukan galat di portal.
 
-   Selama keduanya kosong, **fiturnya mati bersih, bukan rusak**: rutenya
-   membalas 404 dan tombolnya tidak dirender sama sekali. Itu disengaja —
-   tombol yang sudah pasti gagal lebih buruk daripada tidak ada tombol.
-
-   Redirect URI yang harus didaftarkan di Google Cloud Console sudah tertulis
-   sebagai `GOOGLE_REDIRECT_URI` di masing-masing berkas `.env`, dan harus
-   didaftarkan **persis** seperti itu (skema, host, tanpa trailing slash).
+   Kodenya sendiri lengkap: `Public\GoogleAuthController`, rute `/masuk/google`,
+   tombol di halaman masuk dan daftar, dan 8 uji di
+   `tests/Feature/LoginGoogleTest.php`. Kalau kredensialnya dikosongkan lagi,
+   **fiturnya mati bersih, bukan rusak**: rutenya membalas 404 dan tombolnya
+   tidak dirender sama sekali. Itu disengaja — tombol yang sudah pasti gagal
+   lebih buruk daripada tidak ada tombol.
 
 Tanda tangan digital bersertifikat **tidak lagi ada di daftar ini** — sudah
 diputuskan tidak dipakai; lihat §3 nomor 5.
+
+Dua berkas env usang, `.env.dev` dan `.env.prod`, **sudah dihapus**
+(21 Agustus 2026). Isinya berbahaya justru karena terlihat masuk akal: alamat
+ERP produksi dengan token dan `APP_KEY` milik lingkungan lokal. Berkas env yang
+sah hanya empat: `.env`, `.env.development`, `.env.staging`, `.env.production`.
 
 ### Rekonsiliasi status — sudah lengkap (16 Agustus 2026)
 

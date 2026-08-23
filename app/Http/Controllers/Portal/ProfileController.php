@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Portal;
 
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
+use App\Models\Submission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -26,7 +27,21 @@ class ProfileController extends Controller
         $user  = Auth::user();
         $links = $user->partnerLinks()->latest()->get();
 
-        return view('portal.profile', compact('user', 'links'));
+        // Tab "Dokumen Saya" — berkas yang PERNAH DIKIRIM pengguna ini, dibaca
+        // lewat pengajuannya supaya batas kepemilikannya ikut global scope
+        // `milik_sendiri`, bukan lewat tabel lampiran langsung.
+        //
+        // Sebelumnya tab ini kartu kosong permanen yang menjanjikan invoice,
+        // surat jalan, dan kontrak akan "terkumpul di sini". Ketiganya milik
+        // ERP dan sudah punya kartu layanannya sendiri; yang benar-benar bisa
+        // dikumpulkan portal adalah kiriman penggunanya sendiri.
+        $berkasSaya = Submission::with('attachments')
+            ->whereHas('attachments')
+            ->latest()
+            ->take(50)
+            ->get();
+
+        return view('portal.profile', compact('user', 'links', 'berkasSaya'));
     }
 
     public function updateAccount(Request $request)

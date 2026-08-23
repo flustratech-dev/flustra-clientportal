@@ -1,11 +1,19 @@
 <!DOCTYPE html>
 <html lang="id" x-data="{ 
     darkMode: localStorage.getItem('darkMode') === 'true'
-}" :class="{ 'dark': darkMode }">
+}" :class="{ 'dark': darkMode }"
+      @tema-luar.window="darkMode = $event.detail.gelap">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google" content="notranslate">
+    {{-- Ikon tab. Naikkan ?v= setiap kali berkasnya diganti: favicon di-cache
+         peramban jauh lebih lengket daripada aset biasa. --}}
+    <link rel="icon" href="{{ asset('favicon.ico') }}?v=3" sizes="any">
+    {{-- Ikon layar utama iOS. Sengaja persegi penuh: iOS mengabaikan transparansi
+         dan memasang mask sudut membulatnya sendiri, jadi badge bersudut transparan
+         justru tampil dengan sudut hitam. --}}
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}?v=1">
     <title x-text="isRegister ? 'Register - Flustra Client Portal' : 'Login - Flustra Client Portal'">Login - Flustra Client Portal</title>
     
     <!-- Google Fonts -->
@@ -17,12 +25,7 @@
     <!-- Styles & Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
-    <!-- Prevent Theme White Flash on Initial Page Load -->
-    <script>
-        if (localStorage.getItem('darkMode') === 'true') {
-            document.documentElement.classList.add('dark');
-        }
-    </script>
+    @include('partials.tema')
     <style>
         html { background-color: #f0f4f9; }
         html.dark { background-color: #090d16; }

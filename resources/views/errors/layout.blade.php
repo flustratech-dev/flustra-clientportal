@@ -16,7 +16,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google" content="notranslate">
+    {{-- Ikon tab. Naikkan ?v= setiap kali berkasnya diganti: favicon di-cache
+         peramban jauh lebih lengket daripada aset biasa. --}}
+    <link rel="icon" href="{{ asset('favicon.ico') }}?v=3" sizes="any">
+    {{-- Ikon layar utama iOS. Sengaja persegi penuh: iOS mengabaikan transparansi
+         dan memasang mask sudut membulatnya sendiri, jadi badge bersudut transparan
+         justru tampil dengan sudut hitam. --}}
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}?v=1">
     <title>@yield('judul') &middot; {{ config('app.name') }}</title>
+    @include('partials.tema')
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -40,12 +48,10 @@
         .tautan { display: block; margin-top: 14px; font-size: 11px; color: #94a3b8; text-decoration: none; }
         .tautan:hover { color: #64748b; }
 
-        @media (prefers-color-scheme: dark) {
-            body { background: #090d16; color: #e2e8f0; }
-            .kotak { background: #09090b; border-color: #1c1c1e; box-shadow: none; }
-            h1 { color: #fff; }
-            p, .tautan { color: #94a3b8; }
-        }
+        html.dark body { background: #090d16; color: #e2e8f0; }
+        html.dark .kotak { background: #09090b; border-color: #1c1c1e; box-shadow: none; }
+        html.dark h1 { color: #fff; }
+        html.dark p, html.dark .tautan { color: #94a3b8; }
     </style>
 </head>
 <body>

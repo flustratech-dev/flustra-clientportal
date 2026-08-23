@@ -185,9 +185,25 @@
                                     supaya data penagihan Anda tetap konsisten dengan dokumen kami.
                                 @endif
                             </p>
-                            <button type="button" class="btn-secondary mt-2" disabled>
-                                Ajukan Perubahan (segera hadir)
-                            </button>
+                            {{-- Tombolnya sempat mati berlabel "segera hadir" padahal
+                                 layanannya sudah lengkap sejak lama lewat kartu Data
+                                 Perusahaan / Data Vendor di beranda — mitra yang
+                                 mencarinya di sini menyimpulkan fiturnya belum ada.
+
+                                 Hanya ditampilkan untuk peran yang sedang dipakai:
+                                 halaman tujuannya dijaga `mitra:customer`/`mitra:vendor`
+                                 yang membaca peran aktif, jadi tautan untuk peran lain
+                                 akan berakhir di penolakan. --}}
+                            @if($user->active_link_id === $link->id)
+                                <a href="{{ $link->partner_type === 'vendor' ? route('vendor.data.edit') : route('layanan.data.edit') }}"
+                                   class="btn-secondary mt-2 inline-block">
+                                    Ajukan Perubahan
+                                </a>
+                            @else
+                                <p class="text-[11px] text-slate-400 mt-2">
+                                    Pilih "Pakai peran ini" di atas lebih dulu untuk mengajukan perubahan data {{ $link->partner_type_label }}.
+                                </p>
+                            @endif
                         </div>
                     @endif
                 </div>
@@ -196,16 +212,59 @@
     </div>
 
     {{-- ========== TAB DOKUMEN ========== --}}
-    <div x-show="tab === 'dokumen'" x-cloak>
-        <div class="erp-card text-center py-12">
-            <svg class="w-11 h-11 mx-auto text-slate-300 dark:text-slate-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
-            <p class="text-sm font-semibold text-slate-600 dark:text-slate-300">Belum ada dokumen</p>
-            <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                Berkas yang Anda unggah dan dokumen yang kami terbitkan — invoice, surat jalan, kontrak —
-                akan terkumpul di sini.
+    <div x-show="tab === 'dokumen'" x-cloak class="space-y-4">
+
+        {{-- Berkas yang dikirim mitra sendiri. Dokumen terbitan kami — invoice,
+             surat jalan, kontrak — tidak dikumpulkan di sini: semuanya milik
+             sistem kantor dan sudah punya kartu layanannya sendiri di beranda.
+             Menjanjikannya di halaman ini membuat tab-nya selamanya berbohong. --}}
+        @if($berkasSaya->isEmpty())
+            <div class="erp-card text-center py-12">
+                <svg class="w-11 h-11 mx-auto text-slate-300 dark:text-slate-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <p class="text-sm font-semibold text-slate-600 dark:text-slate-300">Belum ada berkas terkirim</p>
+                <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                    Bukti transfer, faktur, foto barang retur, dan CV yang Anda kirim lewat portal
+                    akan terkumpul di sini.
+                </p>
+            </div>
+        @else
+            <div class="erp-card">
+                <h3 class="text-xs font-bold text-slate-800 dark:text-white mb-1">Berkas yang Anda kirim</h3>
+                <p class="text-[11px] text-slate-400 mb-4">
+                    Tersimpan aman di penyimpanan tertutup kami. Buka pengajuannya untuk melihat
+                    berkas ini beserta perjalanan prosesnya.
+                </p>
+                <div class="space-y-2">
+                    @foreach($berkasSaya as $pengajuan)
+                        @foreach($pengajuan->attachments as $file)
+                            <a href="{{ route('riwayat.show', $pengajuan) }}"
+                               class="flex items-center gap-3 p-2.5 rounded-xl border border-slate-100 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
+                                <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                                </svg>
+                                <span class="flex-1 min-w-0">
+                                    <span class="block text-xs text-slate-700 dark:text-slate-300 truncate">{{ $file->original_name }}</span>
+                                    <span class="block text-[10px] text-slate-400">
+                                        {{ $pengajuan->type_label }} · {{ $pengajuan->reference_number }} · {{ $pengajuan->created_at?->format('d M Y') }}
+                                    </span>
+                                </span>
+                                <span class="text-[10px] text-slate-400 shrink-0">{{ $file->readable_size }}</span>
+                            </a>
+                        @endforeach
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
+        <div class="erp-card">
+            <h3 class="text-xs font-bold text-slate-800 dark:text-white mb-1">Dokumen dari kami</h3>
+            <p class="text-[11px] text-slate-500 leading-relaxed">
+                Tagihan, penawaran, kontrak, dan surat jalan tidak dikumpulkan di halaman ini —
+                masing-masing punya kartunya sendiri di beranda, lengkap dengan status terbarunya.
             </p>
+            <a href="{{ route('beranda') }}" class="btn-secondary mt-3 inline-block">Buka daftar layanan</a>
         </div>
     </div>
 
