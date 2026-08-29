@@ -196,15 +196,17 @@ class ErpVendorApi
      *
      * @throws ErpException
      */
-    public function link(User $user): PartnerLink
+    public function link(User $user): ?PartnerLink
     {
         $link = KonteksMitra::link($user, 'vendor');
 
         if (! $link) {
+            if ($user->isAdmin()) {
+                return null;
+            }
+
             throw new ErpException(
-                $user->isAdmin()
-                    ? 'Pilih dulu mitra yang ingin Anda lihat di halaman "Lihat Sebagai".'
-                    : 'Akun ini belum terverifikasi sebagai vendor.',
+                'Akun ini belum terverifikasi sebagai vendor.',
                 retryable: false,
             );
         }
@@ -215,12 +217,24 @@ class ErpVendorApi
     /** Lihat catatan di ErpCustomerApi::portalUserId. */
     protected function portalUserId(User $user): int
     {
-        return KonteksMitra::pemilik($user, $this->link($user))->id;
+        $link = $this->link($user);
+
+        if (! $link) {
+            throw new ErpException('Pilih mitra vendor terlebih dahulu.', retryable: false);
+        }
+
+        return KonteksMitra::pemilik($user, $link)->id;
     }
 
     protected function prefix(User $user): string
     {
-        return '/vendors/'.$this->link($user)->erp_partner_id;
+        $link = $this->link($user);
+
+        if (! $link) {
+            throw new ErpException('Pilih mitra vendor terlebih dahulu.', retryable: false);
+        }
+
+        return '/vendors/'.$link->erp_partner_id;
     }
 
     /**
@@ -264,7 +278,9 @@ class ErpVendorApi
     /** Kunci cache dipisah per mitra — isolasi data tidak boleh bocor lewat cache. */
     protected function kunciMitra(User $user): string
     {
-        return 'vendor:'.$this->link($user)->erp_partner_id;
+        $link = $this->link($user);
+
+        return 'vendor:'.($link?->erp_partner_id ?? 'guest');
     }
 
     /**

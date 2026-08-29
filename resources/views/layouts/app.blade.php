@@ -140,15 +140,8 @@
     $navs = [
         ['route' => 'beranda',        'label' => 'Beranda',  'match' => 'beranda'],
         ['route' => 'riwayat.index',  'label' => 'Riwayat',  'match' => 'riwayat.*'],
-        ['route' => 'notifikasi.index','label' => 'Notifikasi','match' => 'notifikasi.*'],
         ['route' => 'bantuan',        'label' => 'Bantuan',  'match' => 'bantuan'],
     ];
-
-    // Admin portal dapat satu menu tambahan. Mitra tidak pernah melihatnya —
-    // dan bila menebak alamatnya pun mendapat 404, bukan 403.
-    if ($u?->isAdmin()) {
-        $navs[] = ['route' => 'admin.dashboard', 'label' => 'Kondisi Portal', 'match' => 'admin.*'];
-    }
 @endphp
 
 <!-- ==================== KONTEN ==================== -->
@@ -158,160 +151,163 @@
          Tidak ada sidebar — keputusan pemilik produk, lihat CLAUDE.md §6. --}}
     {{-- Header sengaja mentok kiri-kanan, tidak ikut kolom terpusat mana pun
          (ketentuan pemilik produk). --}}
-    <header class="sticky top-0 z-40 h-14 bg-white/90 dark:bg-slate-800/90 backdrop-blur border-b border-slate-200 dark:border-slate-700 flex items-center gap-2 px-4 transition-colors">
+    <header class="sticky top-0 z-40 h-14 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 flex items-center gap-2 px-4 transition-colors">
 
-        <a href="{{ route('beranda') }}" class="flex items-center gap-2.5 shrink-0 group mr-1">
+        <a href="{{ route('beranda') }}" class="flex items-center gap-2.5 shrink-0 group mr-2">
             <img src="{{ asset('images/flustraa.png') }}" alt="Flustra Logo" class="w-7 h-7 object-contain group-hover:scale-105 transition-transform duration-200 shrink-0">
             <div class="min-w-0 hidden sm:flex flex-col justify-center">
                 <span class="text-xs font-bold text-slate-800 dark:text-white truncate leading-tight">Flustra</span>
-                <span class="text-[8px] uppercase font-bold tracking-wider text-[#3572EF] truncate leading-tight">Client Portal</span>
+                <span class="text-[8px] uppercase font-bold tracking-wider text-blue-600 dark:text-blue-400 truncate leading-tight">Client Portal</span>
             </div>
         </a>
 
         {{-- Menu utama. Di bawah md digantikan bottom nav — deretan mendatar
              tidak muat di lebar 375px tanpa menyusut jadi tidak terbaca. --}}
-        <nav class="hidden md:flex items-center gap-0.5 min-w-0 flex-1">
+        <nav class="hidden md:flex items-center gap-1 min-w-0 flex-1">
             @foreach($navs as $nav)
                 <a href="{{ route($nav['route']) }}"
-                   class="relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all {{ request()->routeIs($nav['match']) ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}">
+                   class="relative px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 {{ request()->routeIs($nav['match']) ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white' }}">
                     {{ $nav['label'] }}
-                    @if($nav['route'] === 'notifikasi.index')
-                        <span x-show="unreadCount > 0" x-cloak
-                              class="ml-1 px-1.5 py-0.5 rounded-full bg-blue-500 text-white text-[9px] font-bold"
-                              x-text="unreadCount"></span>
-                    @endif
                 </a>
             @endforeach
         </nav>
 
-        {{-- Di mobile logo tidak memakan seluruh lebar, jadi perkakas kanan
-             tetap terdorong ke tepi. --}}
-        <div class="flex-1 md:hidden"></div>
-
-        {{-- Pemicu pencarian. Di mobile hanya ikon: bilah lengkap memakan
-             lebar yang lebih dibutuhkan menu. --}}
-        <button @click="bukaCari()"
-                class="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-400 hover:border-slate-300 dark:hover:border-slate-600 transition-colors cursor-pointer"
-                aria-label="Cari">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-            <span class="hidden lg:inline text-[11px]">Cari…</span>
-            <kbd class="hidden lg:inline text-[9px] font-mono px-1 py-0.5 rounded border border-slate-200 dark:border-slate-700">Ctrl K</kbd>
-        </button>
-
-        <!-- Lonceng notifikasi -->
-        <div class="relative">
-            <button @click="showNotifyDropdown = !showNotifyDropdown"
-                    class="relative p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
-                    aria-label="Notifikasi">
-                <svg class="w-4.5 h-4.5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1h6z"/>
-                </svg>
-                <span x-show="unreadCount > 0" x-cloak
-                      class="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center"
-                      x-text="unreadCount > 9 ? '9+' : unreadCount"></span>
+        {{-- Di mobile logo tidak memakan seluruh lebar, jadi perkakas kana        {{-- Pemicu pencarian. Desktop: pill input bar persis Flustra Office --}}
+        <div class="hidden sm:flex items-center flex-1 max-w-xs md:max-w-md mx-2 md:mx-4">
+            <button @click="bukaCari()"
+                    class="w-full flex items-center justify-between px-3.5 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 rounded-xl hover:bg-slate-100/50 dark:hover:bg-slate-800 transition-all text-xs font-medium focus:outline-none cursor-pointer">
+                <div class="flex items-center gap-2 truncate">
+                    <svg class="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <span class="truncate">Cari pengajuan, dokumen, layanan...</span>
+                </div>
             </button>
-
-            <div x-show="showNotifyDropdown" x-cloak @click.outside="showNotifyDropdown = false"
-                 x-transition:enter="transition ease-out duration-150"
-                 x-transition:enter-start="opacity-0 -translate-y-2"
-                 x-transition:enter-end="opacity-100 translate-y-0"
-                 class="absolute right-0 mt-2 w-80 max-w-[90vw] bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden">
-
-                <div class="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 dark:border-slate-700">
-                    <span class="text-xs font-bold text-slate-800 dark:text-white">Notifikasi</span>
-                    <button @click="markAllRead()" class="text-[10px] text-blue-500 hover:underline cursor-pointer">Tandai semua</button>
-                </div>
-
-                <div class="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700">
-                    <template x-for="n in notifications" :key="n.id">
-                        <a :href="n.url || '{{ route('notifikasi.index') }}'"
-                           class="flex gap-2.5 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
-                           :class="!n.is_read ? 'bg-blue-50/50 dark:bg-blue-950/20' : ''">
-                            <span class="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0"
-                                  :class="n.is_read ? 'bg-slate-300 dark:bg-slate-600' : 'bg-blue-500'"></span>
-                            <span class="min-w-0">
-                                <span class="block text-xs font-semibold text-slate-800 dark:text-white" x-text="n.title"></span>
-                                <span class="block text-[11px] text-slate-500 line-clamp-2" x-text="n.body"></span>
-                                <span class="block text-[10px] text-slate-400 mt-0.5" x-text="n.time"></span>
-                            </span>
-                        </a>
-                    </template>
-                    <div x-show="notifications.length === 0" class="px-4 py-8 text-center text-xs text-slate-400">
-                        Belum ada notifikasi.
-                    </div>
-                </div>
-
-                <a href="{{ route('notifikasi.index') }}"
-                   class="block px-4 py-2.5 text-center text-[11px] font-semibold text-blue-500 hover:bg-slate-50 dark:hover:bg-slate-700/50 border-t border-slate-100 dark:border-slate-700">
-                    Lihat semua
-                </a>
-            </div>
         </div>
 
-        <!-- Toggle tema -->
-        <button @click="darkMode = !darkMode"
-                class="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
-                aria-label="Ganti tema">
-            <svg x-show="darkMode" x-cloak class="w-4.5 h-4.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/>
-            </svg>
-            <svg x-show="!darkMode" class="w-4.5 h-4.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+        {{-- Mobile Search Trigger Icon --}}
+        <button @click="bukaCari()"
+                class="sm:hidden p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-xl focus:outline-none transition-colors cursor-pointer"
+                aria-label="Cari">
+            <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
             </svg>
         </button>
 
-        {{-- Profil: dropdown avatar, bukan blok di kaki sidebar. Pola ERP,
-             lihat resources/views/layouts/app.blade.php di sana. --}}
-        <div class="relative shrink-0" x-data="{ profilBuka: false }">
-            <button @click="profilBuka = !profilBuka"
-                    class="flex items-center gap-1.5 rounded-xl p-0.5 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
-                    aria-label="Menu profil">
-                <img src="{{ $u->avatar_url }}" alt="{{ $u->name }}"
-                     class="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-slate-700 shrink-0" loading="lazy">
-                <svg class="w-3 h-3 text-slate-400 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        {{-- Right Section: Moon (Dark Mode) -> Bell (Notifications) -> Avatar (Blue circle with initials or avatar image) --}}
+        <div class="flex items-center gap-1.5 md:gap-2 shrink-0">
+
+            <!-- Toggle tema (Dark Mode) -->
+            <button @click="darkMode = !darkMode"
+                    class="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/60 rounded-xl relative focus:outline-none transition-colors cursor-pointer"
+                    aria-label="Ganti tema">
+                <svg x-show="darkMode" x-cloak class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/>
+                </svg>
+                <svg x-show="!darkMode" class="w-5 h-5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
                 </svg>
             </button>
 
-            {{-- @click.outside dipasang di PANELNYA, bukan di pembungkus —
-                 pola yang sama dengan lonceng notifikasi di atas. Dipasang di
-                 pembungkus, klik pada tombolnya sendiri ikut menutupnya kembali
-                 seketika, jadi dropdown-nya tidak pernah sempat terlihat. --}}
-            <div x-show="profilBuka" x-cloak @click.outside="profilBuka = false"
-                 x-transition:enter="transition ease-out duration-150"
-                 x-transition:enter-start="opacity-0 -translate-y-2"
-                 x-transition:enter-end="opacity-100 translate-y-0"
-                 class="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden">
+            <!-- Lonceng notifikasi -->
+            <div class="relative">
+                <button @click="showNotifyDropdown = !showNotifyDropdown"
+                        class="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/60 rounded-xl relative focus:outline-none transition-colors cursor-pointer"
+                        aria-label="Notifikasi">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1h6z"/>
+                    </svg>
+                    <span x-show="unreadCount > 0" x-cloak
+                          class="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center"
+                          x-text="unreadCount > 9 ? '9+' : unreadCount"></span>
+                </button>
 
-                <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-700">
-                    <p class="text-xs font-semibold text-slate-800 dark:text-white truncate">{{ $u->name }}</p>
-                    <p class="text-[10px] text-slate-400 truncate mt-0.5">{{ $u->email }}</p>
-                    <span class="inline-block mt-1.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold {{ $u->account_type_color }}">
-                        {{ $u->account_type_label }}
-                    </span>
-                </div>
+                <div x-show="showNotifyDropdown" x-cloak @click.outside="showNotifyDropdown = false"
+                     x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0 -translate-y-2"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     class="absolute right-0 mt-2 w-80 max-w-[90vw] bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden z-50">
 
-                @if($u?->isAdmin())
-                    <a href="{{ route('admin.dashboard') }}"
-                       class="block px-4 py-2.5 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/20 transition-colors">
-                        Panel Superadmin
+                    <div class="px-4 py-2.5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-800 dark:text-white">Notifikasi</span>
+                        <button @click="markAllRead()" class="text-[10px] text-blue-500 hover:underline cursor-pointer">Tandai semua</button>
+                    </div>
+
+                    <div class="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700">
+                        <template x-for="n in notifications" :key="n.id">
+                            <a :href="n.url || '{{ route('notifikasi.index') }}'"
+                               class="flex gap-2.5 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+                               :class="!n.is_read ? 'bg-blue-50/50 dark:bg-blue-950/20' : ''">
+                                <span class="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0"
+                                      :class="n.is_read ? 'bg-slate-300 dark:bg-slate-600' : 'bg-blue-500'"></span>
+                                <span class="min-w-0">
+                                    <span class="block text-xs font-semibold text-slate-800 dark:text-white" x-text="n.title"></span>
+                                    <span class="block text-[11px] text-slate-500 line-clamp-2" x-text="n.body"></span>
+                                    <span class="block text-[10px] text-slate-400 mt-0.5" x-text="n.time"></span>
+                                </span>
+                            </a>
+                        </template>
+                        <div x-show="notifications.length === 0" class="px-4 py-8 text-center text-xs text-slate-400">
+                            Belum ada notifikasi.
+                        </div>
+                    </div>
+
+                    <a href="{{ route('notifikasi.index') }}"
+                       class="block px-4 py-2.5 text-center text-[11px] font-semibold text-blue-500 hover:bg-slate-50 dark:hover:bg-slate-700/50 border-t border-slate-100 dark:border-slate-700">
+                        Lihat semua
                     </a>
-                @endif
+                </div>
+            </div>
 
-                <a href="{{ route('profil.edit') }}"
-                   class="block px-4 py-2.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                    Profil Saya
-                </a>
+            <!-- Profil: Avatar Bulat dengan inisial seperti di Flustra Office -->
+            <div class="relative shrink-0" x-data="{ profilBuka: false }">
+                <button @click="profilBuka = !profilBuka"
+                        class="flex items-center gap-1.5 rounded-full p-0.5 hover:ring-2 hover:ring-blue-500/20 transition-all cursor-pointer focus:outline-none"
+                        aria-label="Menu profil">
+                    @if($u->avatar && (str_starts_with($u->avatar, 'http') || \Illuminate\Support\Facades\Storage::disk('public')->exists($u->avatar)))
+                        <img src="{{ $u->avatar_url }}" alt="{{ $u->name }}"
+                             class="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-slate-700 shadow-sm shrink-0" loading="lazy">
+                    @else
+                        <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-sm uppercase shrink-0">
+                            {{ substr($u->name ?? 'U', 0, 2) }}
+                        </div>
+                    @endif
+                </button>
 
-                <form action="{{ route('logout') }}" method="POST" class="border-t border-slate-100 dark:border-slate-700">
-                    @csrf
-                    <button type="submit"
-                            class="w-full text-left px-4 py-2.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors cursor-pointer">
-                        Keluar
-                    </button>
-                </form>
+                <div x-show="profilBuka" x-cloak @click.outside="profilBuka = false"
+                     x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0 -translate-y-2"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     class="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden z-50">
+
+                    <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-700">
+                        <p class="text-xs font-semibold text-slate-800 dark:text-white truncate">{{ $u->name }}</p>
+                        <p class="text-[10px] text-slate-400 truncate mt-0.5">{{ $u->email }}</p>
+                        <span class="inline-block mt-1.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold {{ $u->account_type_color }}">
+                            {{ $u->account_type_label }}
+                        </span>
+                    </div>
+
+                    @if($u?->isAdmin())
+                        <a href="{{ route('admin.dashboard') }}"
+                           class="block px-4 py-2.5 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/20 transition-colors">
+                            Panel Superadmin
+                        </a>
+                    @endif
+
+                    <a href="{{ route('profil.edit') }}"
+                       class="block px-4 py-2.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                        Profil Saya
+                    </a>
+
+                    <form action="{{ route('logout') }}" method="POST" class="border-t border-slate-100 dark:border-slate-700">
+                        @csrf
+                        <button type="submit"
+                                class="w-full text-left px-4 py-2.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors cursor-pointer">
+                            Keluar
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </header>
@@ -444,11 +440,6 @@
            class="relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full {{ request()->routeIs($nav['match']) ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400' }}">
             @include('partials.nav-icon', ['name' => $nav['route'], 'size' => 'w-5 h-5'])
             <span class="text-[9px] font-semibold">{{ $nav['label'] }}</span>
-            @if($nav['route'] === 'notifikasi.index')
-                <span x-show="unreadCount > 0" x-cloak
-                      class="absolute top-2 right-1/4 min-w-3.5 h-3.5 px-1 rounded-full bg-red-500 text-white text-[8px] font-bold flex items-center justify-center"
-                      x-text="unreadCount > 9 ? '9+' : unreadCount"></span>
-            @endif
         </a>
     @endforeach
 </nav>

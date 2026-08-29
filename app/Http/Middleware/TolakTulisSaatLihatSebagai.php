@@ -29,28 +29,19 @@ class TolakTulisSaatLihatSebagai
             return $next($request);
         }
 
-        if (! KonteksMitra::sedangLihatSebagai($request->user())) {
-            return $next($request);
+        if ($request->user()?->isAdmin()) {
+            if ($request->routeIs('admin.*') || $request->routeIs('profil.*') || $request->routeIs('logout')) {
+                return $next($request);
+            }
+
+            $link = KonteksMitra::pilihanAdmin();
+
+            return back()->with('error', $link
+                ? 'Anda sedang melihat sebagai '.$link->company_name.', jadi pengiriman ditolak. Pengajuan atas nama mitra harus dikerjakan di Flustra Office dengan akun Anda sendiri.'
+                : 'Aksi kirim dinonaktifkan untuk akun admin. Pengajuan mitra harus dikerjakan langsung di Flustra Office.'
+            );
         }
 
-        /*
-         * Kecuali mengganti atau mengakhiri konteksnya sendiri.
-         *
-         * Tanpa pengecualian ini, admin yang sudah masuk ke satu mitra
-         * terkunci di sana: tombol "Lihat Sebagai Ini" dan "Selesai" sama-sama
-         * POST, dan penjaga ini akan menolak keduanya. Keluar dari mode
-         * lihat-sebagai tidak boleh butuh logout.
-         */
-        if ($request->routeIs('admin.lihat-sebagai.*')) {
-            return $next($request);
-        }
-
-        $link = KonteksMitra::pilihanAdmin();
-
-        return back()->with('error',
-            'Anda sedang melihat sebagai '.($link?->company_name ?? 'mitra lain')
-            .', jadi pengiriman ditolak. Pengajuan atas nama mitra harus dikerjakan di Flustra Office '
-            .'dengan akun Anda sendiri, supaya jejaknya benar.'
-        );
+        return $next($request);
     }
 }

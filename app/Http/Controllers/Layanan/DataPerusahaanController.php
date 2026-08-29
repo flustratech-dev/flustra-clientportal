@@ -34,19 +34,19 @@ class DataPerusahaanController extends LayananPelangganController
         // ERP hanya mengembalikan sebagian kolom lewat /summary. Sisanya diisi
         // dari partner_links — salinan yang dikirim pengguna sendiri saat klaim.
         $nilaiSekarang = [
-            'company'        => $summary['company'] ?? $link->company_name,
-            'name'           => $summary['name'] ?? $link->company_name,
-            'npwp'           => $link->npwp,
-            'address'        => $link->address,
-            'contact_person' => $link->contact_person,
-            'phone'          => $link->phone,
-            'email'          => $link->billing_email,
+            'company'        => $summary['company'] ?? $link?->company_name ?? '',
+            'name'           => $summary['name'] ?? $link?->company_name ?? '',
+            'npwp'           => $link?->npwp ?? '',
+            'address'        => $link?->address ?? '',
+            'contact_person' => $link?->contact_person ?? '',
+            'phone'          => $link?->phone ?? '',
+            'email'          => $link?->billing_email ?? '',
         ];
 
-        $tertunda = Submission::where('type', 'profile_change')
+        $tertunda = $link ? Submission::where('type', 'profile_change')
             ->whereIn('status', ['submitted', 'received', 'under_review'])
             ->latest('id')
-            ->first();
+            ->first() : null;
 
         return $this->halaman('layanan.data.edit', [
             'nilai'    => $nilaiSekarang,

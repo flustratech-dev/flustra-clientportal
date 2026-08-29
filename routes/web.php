@@ -271,6 +271,7 @@ Route::middleware('auth')->group(function () {
         // Lihat portal dari sudut pandang mitra tertentu. Hanya baca —
         // TolakTulisSaatLihatSebagai menolak seluruh aksi kirim selama aktif.
         Route::get('/lihat-sebagai', [LihatSebagaiController::class, 'index'])->name('lihat-sebagai');
+        Route::post('/lihat-sebagai-pilih', [LihatSebagaiController::class, 'pilihInline'])->name('lihat-sebagai.pilih-inline');
         Route::post('/lihat-sebagai/{link}', [LihatSebagaiController::class, 'pilih'])
             ->whereNumber('link')->name('lihat-sebagai.pilih');
         Route::post('/lihat-sebagai/selesai', [LihatSebagaiController::class, 'selesai'])->name('lihat-sebagai.selesai');

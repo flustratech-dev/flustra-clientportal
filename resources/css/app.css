@@ -182,4 +182,68 @@
     animation: glow-pulse-3 10s ease-in-out infinite;
 }
 
+/* ==================== Modern B2B Hub Enhancements ==================== */
+
+/* Hub Card with subtle gradient highlight & micro-elevation */
+.hub-card {
+    @apply relative bg-white dark:bg-slate-800/90 rounded-2xl border border-slate-200/90 dark:border-slate-700/80 shadow-sm transition-all duration-300;
+}
+
+.hub-card:hover {
+    @apply border-blue-400/60 dark:border-blue-500/60 shadow-md shadow-blue-500/5 -translate-y-0.5;
+}
+
+/* Service Card Modern Hover State */
+.service-hub-card {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.service-hub-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px -8px rgba(59, 130, 246, 0.12), 0 4px 12px -2px rgba(15, 23, 42, 0.04);
+}
+
+.dark .service-hub-card:hover {
+    box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.6), 0 0 20px -4px rgba(59, 130, 246, 0.15);
+}
+
+/* Glass Frost Card */
+.glass-frost {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.dark .glass-frost {
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+/* Hero banner biru mengkilap khas Flustra Office */
+.portal-hero {
+    @apply relative overflow-hidden text-white shadow-xl rounded-3xl;
+    background-image:
+        linear-gradient(135deg,
+            oklch(0.3791 0.1378 265.5222) 0%,
+            oklch(0.4882 0.2172 264.3763) 45%,
+            oklch(0.6231 0.1880 259.8145) 100%);
+}
+
+.portal-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(115deg,
+            rgba(255, 255, 255, 0) 35%,
+            rgba(255, 255, 255, 0.18) 48%,
+            rgba(255, 255, 255, 0) 62%),
+        linear-gradient(to bottom,
+            rgba(255, 255, 255, 0.16) 0%,
+            rgba(255, 255, 255, 0) 45%);
+    pointer-events: none;
+}
+
+
 

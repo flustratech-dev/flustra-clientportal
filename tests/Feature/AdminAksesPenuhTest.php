@@ -77,19 +77,34 @@ class AdminAksesPenuhTest extends TestCase
         $this->assertCount(0, $terkunci, 'Admin tidak boleh punya kartu yang terkunci.');
     }
 
-    public function test_admin_tanpa_konteks_diarahkan_ke_pemilih_bukan_ditolak(): void
+    public function test_admin_tanpa_konteks_bisa_membuka_halaman_langsung(): void
     {
         $admin = $this->admin();
 
-        // Diarahkan, BUKAN 403/404 — tidak ada yang salah dengan aksesnya,
-        // hanya kurang satu keterangan.
-        $this->actingAs($admin)
-            ->get(route('layanan.tagihan.index'))
-            ->assertRedirect(route('admin.lihat-sebagai'));
+        $routes = [
+            'layanan.data.edit',
+            'layanan.tagihan.index',
+            'layanan.pembayaran.create',
+            'layanan.penawaran.index',
+            'layanan.pesanan.index',
+            'layanan.pengiriman.index',
+            'layanan.retur.create',
+            'layanan.kontrak.index',
+            'layanan.kredit.index',
+            'vendor.data.edit',
+            'vendor.po.index',
+            'vendor.tagihan.create',
+            'vendor.pembayaran.index',
+            'vendor.surat-jalan.index',
+            'vendor.retur.index',
+            'vendor.kontrak.index',
+        ];
 
-        $this->actingAs($admin)
-            ->get(route('vendor.po.index'))
-            ->assertRedirect(route('admin.lihat-sebagai'));
+        foreach ($routes as $route) {
+            $this->actingAs($admin)
+                ->get(route($route))
+                ->assertOk();
+        }
     }
 
     public function test_admin_bisa_membuka_layanan_setelah_memilih_mitra(): void
@@ -106,6 +121,26 @@ class AdminAksesPenuhTest extends TestCase
         $this->actingAs($admin)
             ->get(route('layanan.tagihan.index'))
             ->assertOk();
+    }
+
+    public function test_admin_bisa_memilih_mitra_secara_inline(): void
+    {
+        $admin = $this->admin();
+        $link  = $this->mitra('pelanggan@uji.test', 'customer', 42);
+
+        Http::fake(['*' => Http::response(['data' => [], 'meta' => []], 200)]);
+
+        $this->actingAs($admin)
+            ->from(route('layanan.tagihan.index'))
+            ->post(route('admin.lihat-sebagai.pilih-inline'), ['partner_link_id' => $link->id])
+            ->assertRedirect(route('layanan.tagihan.index'));
+
+        $this->actingAs($admin)->get(route('layanan.tagihan.index'))->assertOk();
+
+        Http::assertSent(function ($request) use ($link) {
+            return str_contains($request->url(), '/customers/42/')
+                && str_contains($request->url(), 'portal_user_id='.$link->user_id);
+        });
     }
 
     public function test_admin_memakai_id_pemilik_link_saat_memanggil_erp(): void
@@ -178,10 +213,12 @@ class AdminAksesPenuhTest extends TestCase
         $link->forceFill(['status' => 'revoked'])->save();
 
         // Link yang dicabut tidak boleh tetap bisa dilihat hanya karena masih
-        // tertinggal di sesi admin.
+        // tertinggal di sesi admin. Konteks reset dan halaman tetap terbuka 200 OK.
         $this->actingAs($admin)
             ->get(route('layanan.tagihan.index'))
-            ->assertRedirect(route('admin.lihat-sebagai'));
+            ->assertOk();
+
+        $this->assertNull(KonteksMitra::pilihanAdmin());
     }
 
     // =====================================================================

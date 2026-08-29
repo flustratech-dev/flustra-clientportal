@@ -37,22 +37,14 @@ class EnsureMitra
         $label = $tipe === 'customer' ? 'pelanggan' : 'vendor';
 
         /*
-         * Admin portal tidak pernah terkunci.
+         * Admin portal punya akses penuh ke seluruh layanan.
          *
-         * Ia tidak punya partner_links sendiri, jadi konteksnya diambil dari
-         * mitra yang sedang dipilih di halaman "Lihat Sebagai". Bila belum
-         * memilih, diarahkan ke sana — bukan ditolak, karena tidak ada yang
-         * salah dengan aksesnya, hanya kurang satu keterangan.
+         * Tidak diarahkan ke halaman 'Lihat Sebagai' terlebih dahulu.
+         * Admin dapat langsung mengakses halaman dan memilih/berganti mitra
+         * secara instan langsung di bilah atas halaman tersebut.
          */
         if ($user->isAdmin()) {
-            if (KonteksMitra::link($user, $tipe)) {
-                return $next($request);
-            }
-
-            return redirect()->route('admin.lihat-sebagai')->with(
-                'error',
-                'Pilih dulu mitra '.$label.' yang ingin Anda lihat.'
-            );
+            return $next($request);
         }
 
         $link = $user->activeLink();

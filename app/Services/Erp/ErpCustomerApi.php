@@ -198,15 +198,17 @@ class ErpCustomerApi
      *
      * @throws ErpException
      */
-    public function link(User $user): PartnerLink
+    public function link(User $user): ?PartnerLink
     {
         $link = KonteksMitra::link($user, 'customer');
 
         if (! $link) {
+            if ($user->isAdmin()) {
+                return null;
+            }
+
             throw new ErpException(
-                $user->isAdmin()
-                    ? 'Pilih dulu mitra yang ingin Anda lihat di halaman "Lihat Sebagai".'
-                    : 'Akun ini belum terverifikasi sebagai pelanggan.',
+                'Akun ini belum terverifikasi sebagai pelanggan.',
                 retryable: false,
             );
         }
@@ -224,12 +226,24 @@ class ErpCustomerApi
      */
     protected function portalUserId(User $user): int
     {
-        return KonteksMitra::pemilik($user, $this->link($user))->id;
+        $link = $this->link($user);
+
+        if (! $link) {
+            throw new ErpException('Pilih mitra pelanggan terlebih dahulu.', retryable: false);
+        }
+
+        return KonteksMitra::pemilik($user, $link)->id;
     }
 
     protected function prefix(User $user): string
     {
-        return '/customers/'.$this->link($user)->erp_partner_id;
+        $link = $this->link($user);
+
+        if (! $link) {
+            throw new ErpException('Pilih mitra pelanggan terlebih dahulu.', retryable: false);
+        }
+
+        return '/customers/'.$link->erp_partner_id;
     }
 
     /**
@@ -278,7 +292,9 @@ class ErpCustomerApi
     /** Kunci cache dipisah per mitra — isolasi data tidak boleh bocor lewat cache. */
     protected function kunciMitra(User $user): string
     {
-        return 'customer:'.$this->link($user)->erp_partner_id;
+        $link = $this->link($user);
+
+        return 'customer:'.($link?->erp_partner_id ?? 'guest');
     }
 
     /**

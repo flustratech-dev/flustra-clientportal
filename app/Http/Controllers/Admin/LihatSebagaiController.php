@@ -68,7 +68,37 @@ class LihatSebagaiController extends Controller
         );
     }
 
-    public function selesai(): RedirectResponse
+    public function pilihInline(Request $request): RedirectResponse
+    {
+        $linkId = $request->input('partner_link_id');
+
+        if (! $linkId) {
+            KonteksMitra::pilih(null);
+
+            return back()->with('success', 'Konteks mitra dinonaktifkan.');
+        }
+
+        $link = PartnerLink::with('user')->find($linkId);
+
+        if (! $link || ! $link->isVerified()) {
+            return back()->with('error', 'Mitra itu belum terverifikasi, jadi tidak ada data yang bisa dilihat.');
+        }
+
+        KonteksMitra::pilih($link->id);
+
+        ActivityLog::log(
+            'admin_lihat_sebagai',
+            'Mulai melihat portal sebagai '.$link->partner_type_label.' "'.$link->company_name
+                .'" (akun '.($link->user->email ?? '—').').'
+        );
+
+        return back()->with(
+            'success',
+            'Anda sekarang melihat portal sebagai '.$link->company_name.'. Aksi kirim dinonaktifkan.'
+        );
+    }
+
+    public function selesai(Request $request): RedirectResponse
     {
         $link = KonteksMitra::pilihanAdmin();
 
@@ -79,6 +109,10 @@ class LihatSebagaiController extends Controller
                 'admin_lihat_sebagai_selesai',
                 'Berhenti melihat portal sebagai "'.$link->company_name.'".'
             );
+        }
+
+        if ($request->headers->get('referer')) {
+            return back()->with('success', 'Kembali ke tampilan standar admin.');
         }
 
         return redirect()->route('admin.dashboard')->with('success', 'Kembali ke tampilan admin.');

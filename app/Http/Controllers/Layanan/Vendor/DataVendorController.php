@@ -37,27 +37,23 @@ class DataVendorController extends LayananVendorController
 
         // ERP hanya mengembalikan sebagian kolom lewat /summary. Sisanya dari
         // partner_links — salinan yang dikirim vendor sendiri saat klaim.
-        //
-        // Nomor rekening sengaja TIDAK ditarik dan tidak ditampilkan: yang
-        // tersimpan di ERP adalah kebenarannya, dan menampilkannya di halaman
-        // publik hanya memperbesar permukaan bila akun ini dibajak.
         $nilai = [
-            'company'        => $summary['company'] ?? $link->company_name,
-            'name'           => $summary['name'] ?? $link->company_name,
-            'npwp'           => $link->npwp,
-            'address'        => $link->address,
-            'contact_person' => $link->contact_person,
-            'phone'          => $link->phone,
-            'email'          => $link->billing_email,
+            'company'        => $summary['company'] ?? $link?->company_name ?? '',
+            'name'           => $summary['name'] ?? $link?->company_name ?? '',
+            'npwp'           => $link?->npwp ?? '',
+            'address'        => $link?->address ?? '',
+            'contact_person' => $link?->contact_person ?? '',
+            'phone'          => $link?->phone ?? '',
+            'email'          => $link?->billing_email ?? '',
             'bank_name'      => null,
             'bank_account'   => null,
             'bank_holder'    => null,
         ];
 
-        $tertunda = Submission::where('type', 'profile_change')
+        $tertunda = $link ? Submission::where('type', 'profile_change')
             ->whereIn('status', ['submitted', 'received', 'under_review'])
             ->latest('id')
-            ->first();
+            ->first() : null;
 
         return $this->halaman('layanan.vendor.data.edit', [
             'nilai'    => $nilai,

@@ -63,9 +63,13 @@ abstract class LayananController extends Controller
                 'error'   => $e->getMessage(),
             ]);
 
-            $this->erpError = $e->statusCode === null
-                ? 'Data terbaru sedang tidak bisa kami ambil dari sistem internal. Ini gangguan sementara — data Anda aman. Coba muat ulang beberapa saat lagi.'
-                : 'Sistem kami menolak permintaan ini. Tim kami sudah menerima catatannya; silakan hubungi kami lewat halaman Bantuan bila terus berulang.';
+            if ($this->user()->isAdmin() && ! \App\Services\KonteksMitra::pilihanAdmin()) {
+                $this->erpError = null;
+            } else {
+                $this->erpError = $e->statusCode === null
+                    ? 'Data terbaru sedang tidak bisa kami ambil dari sistem internal. Ini gangguan sementara — data Anda aman. Coba muat ulang beberapa saat lagi.'
+                    : 'Sistem kami menolak permintaan ini. Tim kami sudah menerima catatannya; silakan hubungi kami lewat halaman Bantuan bila terus berulang.';
+            }
 
             return $fallback;
         }
