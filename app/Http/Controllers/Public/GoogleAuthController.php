@@ -80,8 +80,6 @@ class GoogleAuthController extends Controller
         $user = User::where('google_id', $akunGoogle->getId())->first()
             ?? User::where('email', $email)->first();
 
-        $baru = false;
-
         if (! $user) {
             if (! config('portal.registration_open')) {
                 return redirect()->route('login')->withErrors([
@@ -89,8 +87,11 @@ class GoogleAuthController extends Controller
                 ]);
             }
 
-            $user  = $this->buatAkun($akunGoogle, $email);
-            $baru  = true;
+            return redirect()->route('register')
+                ->with('google_email', $email)
+                ->with('google_name', $akunGoogle->getName() ?: Str::before($email, '@'))
+                ->with('google_id', $akunGoogle->getId())
+                ->with('info', 'Akun Google Anda belum terdaftar. Silakan lengkapi pendaftaran terlebih dahulu.');
         }
 
         if ($user->status !== 'active') {
@@ -109,51 +110,9 @@ class GoogleAuthController extends Controller
             'last_login_ip' => $request->ip(),
         ])->save();
 
-        if ($baru) {
-            Notification::send(
-                $user->id,
-                'Selamat datang di Portal Klien Flustra',
-                'Akun Anda sudah aktif. Untuk membuka layanan pelanggan atau vendor, ajukan verifikasi kerja sama lewat kartu di Beranda.',
-                'success',
-                route('mitra.create')
-            );
-
-            ActivityLog::log('register_success', 'Pendaftar baru lewat Google: '.$user->name.' ('.$user->email.').');
-
-            return redirect()->route('beranda')
-                ->with('success', 'Selamat datang, '.$user->name.'! Akun Anda sudah aktif.');
-        }
-
         ActivityLog::log('login_success', 'Pengguna '.$user->name.' masuk ke portal lewat Google.');
 
         return redirect()->intended(route('beranda'));
-    }
-
-    // =====================================================================
-
-    /**
-     * Akun baru dari Google.
-     *
-     * Kata sandinya acak dan tidak pernah diberitahukan kepada siapa pun: kolom
-     * `password` tidak boleh null, tapi pemilik akun ini masuk lewat Google.
-     * Kalau suatu saat ia ingin punya kata sandi sendiri, jalurnya lewat
-     * "Lupa Sandi" — yang mengirim tautan ke alamat email yang sama.
-     */
-    protected function buatAkun(object $akunGoogle, string $email): User
-    {
-        return User::create([
-            'name'              => $akunGoogle->getName() ?: Str::before($email, '@'),
-            'email'             => $email,
-            'password'          => Hash::make(Str::random(48)),
-            'google_id'         => $akunGoogle->getId(),
-            'account_type'      => 'umum',
-            'status'            => 'active',
-
-            // Google sudah membuktikan kepemilikan alamatnya. Memaksa pengguna
-            // memverifikasi ulang lewat surel hanya mengulang pekerjaan yang
-            // baru saja selesai.
-            'email_verified_at' => now(),
-        ]);
     }
 
     /**

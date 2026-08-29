@@ -93,27 +93,41 @@ class LoginGoogleTest extends TestCase
     // Callback
     // =====================================================================
 
-    public function test_akun_baru_dibuat_sebagai_umum_bukan_mitra(): void
+    public function test_akun_google_belum_terdaftar_diarahkan_ke_halaman_register_dengan_data_terisi(): void
     {
         $this->nyalakan();
-        $this->pura($this->akunGoogle('pendatang@contoh.test'));
+        $this->pura($this->akunGoogle('pendatang@contoh.test', '1122334455'));
 
-        $this->get('/masuk/google/callback')->assertRedirect(route('beranda'));
+        $response = $this->get('/masuk/google/callback');
+        $response->assertRedirect(route('register'));
+        $response->assertSessionHas('google_email', 'pendatang@contoh.test');
+        $response->assertSessionHas('google_name', 'Pengguna Google');
+        $response->assertSessionHas('google_id', '1122334455');
+        $response->assertSessionHas('info');
 
-        $user = User::where('email', 'pendatang@contoh.test')->first();
+        $this->assertGuest();
+        $this->assertDatabaseMissing('users', ['email' => 'pendatang@contoh.test']);
+    }
 
+    public function test_pendaftaran_dengan_google_id_langsung_terverifikasi(): void
+    {
+        $response = $this->post(route('register'), [
+            'name'                  => 'Pengguna Google',
+            'email'                 => 'baru@contoh.test',
+            'password'              => 'PasswordKuat#2026x',
+            'password_confirmation' => 'PasswordKuat#2026x',
+            'google_id'             => '1122334455',
+            'terms'                 => '1',
+        ]);
+
+        $response->assertRedirect(route('beranda'));
+
+        $user = User::where('email', 'baru@contoh.test')->first();
         $this->assertNotNull($user);
-        $this->assertAuthenticatedAs($user);
-
-        // Google membuktikan alamat email, bukan kemitraan. Akun ini tidak boleh
-        // lahir dengan akses data mitra mana pun.
+        $this->assertSame('1122334455', $user->google_id);
         $this->assertSame('umum', $user->account_type);
-        $this->assertNull($user->active_link_id);
-        $this->assertSame(0, $user->partnerLinks()->count());
-
-        // Alamatnya sudah dibuktikan Google; memverifikasi ulang lewat surel
-        // hanya mengulang pekerjaan yang baru saja selesai.
         $this->assertNotNull($user->email_verified_at);
+        $this->assertAuthenticatedAs($user);
     }
 
     public function test_akun_lama_tersambung_tanpa_kehilangan_kata_sandinya(): void

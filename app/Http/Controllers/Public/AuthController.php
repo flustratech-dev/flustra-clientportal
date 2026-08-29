@@ -92,24 +92,29 @@ class AuthController extends Controller
         }
 
         $data = $request->validate([
-            'name'     => ['required', 'string', 'max:255'],
-            'email'    => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'phone'    => ['nullable', 'string', 'max:30'],
-            'password' => ['required', 'confirmed', Password::min(8)->uncompromised()],
-            'terms'    => ['accepted'],
+            'name'      => ['required', 'string', 'max:255'],
+            'email'     => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'phone'     => ['nullable', 'string', 'max:30'],
+            'password'  => ['required', 'confirmed', Password::min(8)->uncompromised()],
+            'terms'     => ['accepted'],
+            'google_id' => ['nullable', 'string', 'max:100'],
         ], [
-            'terms.accepted'    => 'Anda harus menyetujui syarat & ketentuan.',
-            'email.unique'      => 'Email ini sudah terdaftar. Silakan masuk.',
+            'terms.accepted'     => 'Anda harus menyetujui syarat & ketentuan.',
+            'email.unique'       => 'Email ini sudah terdaftar. Silakan masuk.',
             'password.confirmed' => 'Konfirmasi kata sandi tidak cocok.',
         ]);
 
+        $googleId = $data['google_id'] ?? session('google_id');
+
         $user = User::create([
-            'name'         => $data['name'],
-            'email'        => $data['email'],
-            'phone'        => $data['phone'] ?? null,
-            'password'     => Hash::make($data['password']),
-            'account_type' => 'umum',
-            'status'       => 'active',
+            'name'              => $data['name'],
+            'email'             => $data['email'],
+            'phone'             => $data['phone'] ?? null,
+            'password'          => Hash::make($data['password']),
+            'google_id'         => $googleId,
+            'account_type'      => 'umum',
+            'status'            => 'active',
+            'email_verified_at' => $googleId ? now() : null,
         ]);
 
         // Langsung masuk. Inilah janji utama portal — tidak ada antrean
