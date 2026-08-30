@@ -8,6 +8,34 @@
 @section('content')
 <div class="space-y-5">
 
+    {{-- Printable Corporate Letterhead (Hanya muncul saat cetak) --}}
+    <div class="print-only mb-6 pb-4 border-b-2 border-slate-900">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <img src="{{ asset('images/flustraa.png') }}" class="w-10 h-10 object-contain" alt="Flustra">
+                <div>
+                    <h1 class="text-sm font-black text-slate-900 uppercase tracking-wider">PT FLUSTRA TEKNOLOGI NUSANTARA</h1>
+                    <p class="text-[10px] text-slate-600">Gedung Flustra Tower Lt. 8, Jakarta &bull; support@flustra.id &bull; www.flustra.id</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <span class="text-[11px] font-bold font-mono px-2.5 py-1 border border-slate-900 rounded inline-block">BUKTI PENGAJUAN RESMI</span>
+                <p class="text-[9px] text-slate-500 mt-1">Dicetak pada: {{ now()->format('d M Y H:i') }} WIB</p>
+            </div>
+        </div>
+    </div>
+
+    {{-- Action Bar Layar (Disembunyikan saat cetak) --}}
+    <div class="flex items-center justify-between no-print">
+        <div></div>
+        <button type="button" onclick="window.print()" class="btn-secondary inline-flex items-center gap-2 text-xs">
+            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            <span>Cetak Tanda Terima</span>
+        </button>
+    </div>
+
     {{-- Alasan penolakan ditaruh paling atas: itu hal pertama yang dicari
          pengguna saat pengajuannya ditolak. --}}
     @if($submission->status === 'rejected')
@@ -17,7 +45,7 @@
                 {{ $submission->status_reason ?: 'Tidak ada alasan yang dicantumkan. Silakan hubungi kami untuk penjelasan.' }}
             </p>
             @if($submission->type === 'partner_claim')
-                <a href="{{ route('mitra.create') }}" class="btn-primary mt-3">Ajukan Ulang</a>
+                <a href="{{ route('mitra.create') }}" class="btn-primary mt-3 no-print">Ajukan Ulang</a>
             @endif
         </div>
     @endif
@@ -114,6 +142,27 @@
                 <li class="ml-5 text-xs text-slate-400">Belum ada riwayat tercatat.</li>
             @endforelse
         </ol>
+    </div>
+
+    {{-- Printable Verification & Signature Footer --}}
+    <div class="print-only pt-6 mt-6 border-t border-slate-300">
+        <table class="w-full text-xs">
+            <tr>
+                <td class="w-1/2 align-top text-slate-600">
+                    <p class="font-bold text-slate-800">Catatan Keabsahan:</p>
+                    <p class="text-[10px] leading-relaxed mt-1 text-slate-500">
+                        Dokumen ini merupakan bukti tanda terima elektronik yang diterbitkan secara sah oleh sistem Flustra Client Portal. Tidak memerlukan tanda tangan basah untuk pengesahan awal pengajuan.
+                    </p>
+                </td>
+                <td class="w-1/2 align-top text-right text-slate-600">
+                    <p class="text-[10px] text-slate-400">Verifikasi Otomatis Sistem:</p>
+                    <p class="font-mono text-xs font-bold text-slate-800 mt-1">REF: {{ $submission->reference_number }}</p>
+                    <div class="mt-4 pt-4 inline-block border-t border-slate-400 text-center min-w-[160px]">
+                        <p class="text-[10px] font-bold text-slate-700">FLUSTRA CLIENT HUB</p>
+                    </div>
+                </td>
+            </tr>
+        </table>
     </div>
 
 </div>

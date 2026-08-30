@@ -187,6 +187,38 @@
     @include('partials.tema')
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <style>
+        @media print {
+            header, nav, footer, #bottom-nav, .no-print, [role="dialog"], .toast-container, .btn-primary, .btn-secondary:not(.print-include) {
+                display: none !important;
+            }
+            body {
+                background: #ffffff !important;
+                color: #0f172a !important;
+                padding-bottom: 0 !important;
+            }
+            .erp-card {
+                background: #ffffff !important;
+                color: #0f172a !important;
+                border: 1px solid #cbd5e1 !important;
+                box-shadow: none !important;
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+            .dark {
+                color-scheme: light !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+        }
+        @media screen {
+            .print-only {
+                display: none !important;
+            }
+        }
+    </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200 pb-16 md:pb-0">
 
