@@ -95,12 +95,13 @@ class AkunController extends Controller
 
         ActivityLog::log('email_verified', 'Email '.$user->email.' terverifikasi.', $user->id);
 
-        Notification::send(
-            $user->id,
-            'Email Anda terverifikasi',
-            'Terima kasih. Anda kini bisa mengajukan verifikasi kerja sama sebagai pelanggan atau vendor.',
-            'success',
-            route('mitra.create'),
+        \App\Services\NotifikasiMitra::kirim(
+            user: $user,
+            judul: 'Verifikasi Email Berhasil',
+            isi: 'Alamat email Anda telah berhasil diverifikasi. Anda kini dapat mengajukan verifikasi kemitraan resmi sebagai Pelanggan atau Vendor.',
+            tipe: 'success',
+            url: route('mitra.create'),
+            kirimEmail: false,
         );
 
         // Sengaja tidak memaksa login: tautan bisa dibuka di perangkat lain.
@@ -161,21 +162,18 @@ class AkunController extends Controller
 
                 event(new PasswordReset($user));
 
-                // Pemberitahuan ke alamat lama: kalau bukan dia yang mengubah,
-                // inilah kesempatan pertamanya untuk tahu.
-                Mail::raw(
-                    "Halo {$user->name},\n\n"
-                    ."Kata sandi akun Portal Klien Flustra Anda baru saja diubah.\n\n"
-                    ."Bila bukan Anda yang melakukannya, segera hubungi kami.\n\n"
-                    .'— Tim Flustra',
-                    fn ($m) => $m->to($user->email)->subject('Kata sandi Portal Klien Anda diubah')
-                );
-
-                Notification::send(
-                    $user->id,
-                    'Kata sandi diubah',
-                    'Kata sandi akun Anda baru saja diubah lewat tautan pemulihan. Bila bukan Anda, segera hubungi kami.',
-                    'warning',
+                // Pemberitahuan keamanan resmi lintas kanal
+                \App\Services\NotifikasiMitra::kirim(
+                    user: $user,
+                    judul: 'Pemberitahuan Keamanan: Pembaruan Kata Sandi Akun',
+                    isi: 'Kata sandi akun Flustra Client Portal Anda telah berhasil diperbarui. Jika Anda tidak merasa melakukan tindakan ini, harap segera hubungi tim helpdesk keamanan Flustra.',
+                    tipe: 'warning',
+                    url: route('beranda'),
+                    waPesan: \App\Services\NotifikasiMitra::pesan(
+                        'Pemberitahuan Keamanan: Pembaruan Kata Sandi',
+                        'Kata sandi akun Portal Flustra Anda telah diperbarui. Jika Anda tidak merasa melakukan perubahan ini, segera hubungi tim helpdesk Flustra.',
+                    ),
+                    kirimEmail: true,
                 );
             }
         );

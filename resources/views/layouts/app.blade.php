@@ -5,7 +5,9 @@
     showNotifyDropdown: false,
     unreadCount: 0,
     notifications: [],
+    toasts: [],
     pollInterval: null,
+    prevUnreadCount: null,
 
     init() {
         this.$watch('darkMode', val => {
@@ -14,16 +16,15 @@
         });
         document.documentElement.classList.toggle('dark', this.darkMode);
 
-        this.pollNotifications();
+        this.pollNotifications(true);
         this.startPolling();
 
-        // Hentikan polling saat tab tidak aktif — tidak ada gunanya menembak
-        // server tiap 30 detik untuk tab yang tidak dilihat siapa pun.
+        // Jeda polling saat tab tidak aktif untuk menghemat beban server
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 this.stopPolling();
             } else {
-                this.pollNotifications();
+                this.pollNotifications(false);
                 this.startPolling();
             }
         });
@@ -31,7 +32,8 @@
 
     startPolling() {
         if (!this.pollInterval) {
-            this.pollInterval = setInterval(() => this.pollNotifications(), 30000);
+            // Polling realtime 8 detik saat tab aktif
+            this.pollInterval = setInterval(() => this.pollNotifications(false), 8000);
         }
     },
 
@@ -42,17 +44,41 @@
         }
     },
 
-    pollNotifications() {
+    pollNotifications(isInitial = false) {
         fetch('{{ route('notifikasi.poll') }}', {
             headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
         })
         .then(r => r.ok ? r.json() : null)
         .then(data => {
             if (!data) return;
+            
+            // Deteksi notifikasi baru masuk untuk memunculkan Toast Realtime
+            if (!isInitial && this.prevUnreadCount !== null && data.unread > this.prevUnreadCount) {
+                const latest = data.items && data.items[0];
+                if (latest && !latest.is_read) {
+                    this.pushToast(latest);
+                }
+            }
+
+            this.prevUnreadCount = data.unread;
             this.unreadCount = data.unread;
             this.notifications = data.items;
         })
         .catch(() => {});
+    },
+
+    pushToast(n) {
+        const toast = {
+            id: n.id || Date.now(),
+            title: n.title,
+            body: n.body,
+            url: n.url,
+            visible: true
+        };
+        this.toasts.push(toast);
+        setTimeout(() => {
+            toast.visible = false;
+        }, 6000);
     },
 
     markAllRead() {
@@ -124,6 +150,39 @@
     <title>@yield('title', 'Beranda') &middot; {{ config('app.name') }}</title>
 
     <script src="{{ asset('vendor/sweetalert2/sweetalert2.all.min.js') }}"></script>
+    <script>
+        if (typeof Swal !== 'undefined') {
+            window.alert = function (message) {
+                const isDark = document.documentElement.classList.contains('dark') || localStorage.getItem('darkMode') === 'true';
+                let icon = 'info';
+                let title = 'Pemberitahuan';
+                const lower = String(message || '').toLowerCase();
+                if (lower.includes('gagal') || lower.includes('error') || lower.includes('tidak') || lower.includes('salah') || lower.includes('melebihi')) {
+                    icon = 'error';
+                    title = 'Perhatian';
+                } else if (lower.includes('berhasil') || lower.includes('sukses') || lower.includes('terpilih') || lower.includes('disimpan')) {
+                    icon = 'success';
+                    title = 'Berhasil';
+                } else if (lower.includes('peringatan') || lower.includes('warning') || lower.includes('minimal')) {
+                    icon = 'warning';
+                    title = 'Peringatan';
+                }
+                return Swal.fire({
+                    title: title,
+                    text: String(message),
+                    icon: icon,
+                    confirmButtonText: 'Mengerti',
+                    confirmButtonColor: '#2563eb',
+                    background: isDark ? '#1e293b' : '#ffffff',
+                    color: isDark ? '#f8fafc' : '#0f172a',
+                    customClass: {
+                        popup: 'rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700',
+                        confirmButton: 'px-4 py-2 rounded-xl text-xs font-semibold'
+                    }
+                });
+            };
+        }
+    </script>
 
     @include('partials.tema')
 
@@ -218,8 +277,10 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1h6z"/>
                     </svg>
                     <span x-show="unreadCount > 0" x-cloak
-                          class="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center"
-                          x-text="unreadCount > 9 ? '9+' : unreadCount"></span>
+                          class="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center shadow-sm">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span class="relative" x-text="unreadCount > 9 ? '9+' : unreadCount"></span>
+                    </span>
                 </button>
 
                 <div x-show="showNotifyDropdown" x-cloak @click.outside="showNotifyDropdown = false"
@@ -381,6 +442,33 @@
         <a href="{{ route('syarat') }}" class="hover:text-slate-600 dark:hover:text-slate-300">Syarat</a> &middot;
         <a href="{{ route('privasi') }}" class="hover:text-slate-600 dark:hover:text-slate-300">Privasi</a>
     </footer>
+</div>
+
+<!-- ==================== REALTIME TOAST CONTAINER ==================== -->
+<div class="fixed top-16 right-4 z-[9999] flex flex-col gap-2 max-w-sm w-full pointer-events-none px-2 sm:px-0">
+    <template x-for="t in toasts" :key="t.id">
+        <div x-show="t.visible"
+             x-transition:enter="transition ease-out duration-300 transform"
+             x-transition:enter-start="opacity-0 -translate-y-2 scale-95"
+             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+             x-transition:leave="transition ease-in duration-200 transform"
+             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+             x-transition:leave-end="opacity-0 -translate-y-2 scale-95"
+             class="pointer-events-auto bg-slate-900/95 dark:bg-slate-800/95 backdrop-blur-md text-white px-4 py-3 rounded-2xl shadow-2xl border border-white/10 flex items-start gap-3">
+            <span class="w-2.5 h-2.5 rounded-full bg-blue-400 mt-1 shrink-0 animate-ping"></span>
+            <div class="flex-1 min-w-0">
+                <a :href="t.url || '#'" class="block hover:underline">
+                    <h5 class="text-xs font-bold text-white truncate" x-text="t.title"></h5>
+                    <p class="text-[11px] text-slate-300 line-clamp-2 mt-0.5" x-text="t.body"></p>
+                </a>
+            </div>
+            <button @click="t.visible = false" class="text-slate-400 hover:text-white p-1 -mr-1 -mt-1 cursor-pointer">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+    </template>
 </div>
 
 <!-- ==================== PENCARIAN CEPAT (Ctrl+K) ==================== -->

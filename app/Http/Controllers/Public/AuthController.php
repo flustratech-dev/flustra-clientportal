@@ -58,6 +58,17 @@ class AuthController extends Controller
             ])->onlyInput('email');
         }
 
+        // Lockdown Maintenance: Hanya admin yang diizinkan masuk
+        if (\App\Models\PortalSetting::ambil(\App\Services\Maintenance::LOKAL_LOCKDOWN) === '1' && Auth::user()->role !== 'admin') {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return back()->withErrors([
+                'email' => 'Sistem portal saat ini sedang dalam pemeliharaan (Mode Lockdown). Hanya Superadmin yang diizinkan masuk.',
+            ])->onlyInput('email');
+        }
+
         $request->session()->regenerate();
 
         Auth::user()->forceFill([
@@ -76,6 +87,12 @@ class AuthController extends Controller
             return redirect()->route('beranda');
         }
 
+        if (\App\Models\PortalSetting::ambil(\App\Services\Maintenance::LOKAL_LOCKDOWN) === '1') {
+            return redirect()->route('login')->withErrors([
+                'email' => 'Pendaftaran ditutup sementara karena sistem sedang dalam mode pemeliharaan (Lockdown).',
+            ]);
+        }
+
         if (! config('portal.registration_open')) {
             return redirect()->route('login')->withErrors([
                 'email' => 'Pendaftaran sedang ditutup sementara.',
@@ -87,6 +104,10 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
+        if (\App\Models\PortalSetting::ambil(\App\Services\Maintenance::LOKAL_LOCKDOWN) === '1') {
+            return back()->withErrors(['email' => 'Pendaftaran ditutup sementara karena sistem sedang dalam mode pemeliharaan (Lockdown).'])->withInput();
+        }
+
         if (! config('portal.registration_open')) {
             return back()->withErrors(['email' => 'Pendaftaran sedang ditutup sementara.'])->withInput();
         }
@@ -127,12 +148,13 @@ class AuthController extends Controller
             'last_login_ip' => $request->ip(),
         ])->save();
 
-        Notification::send(
-            $user->id,
-            'Selamat datang di Portal Klien Flustra',
-            'Akun Anda sudah aktif. Untuk membuka layanan pelanggan atau vendor, ajukan verifikasi kerja sama lewat kartu di Beranda.',
-            'success',
-            route('mitra.create')
+        \App\Services\NotifikasiMitra::kirim(
+            user: $user,
+            judul: 'Selamat Datang di Flustra Client Portal',
+            isi: 'Akun Anda telah berhasil diaktifkan. Untuk mengakses modul Layanan Pelanggan atau Pengadaan Vendor, silakan lengkapi verifikasi profil kemitraan Anda.',
+            tipe: 'success',
+            url: route('mitra.create'),
+            kirimEmail: false,
         );
 
         ActivityLog::log('register_success', 'Pendaftar baru: '.$user->name.' ('.$user->email.').');

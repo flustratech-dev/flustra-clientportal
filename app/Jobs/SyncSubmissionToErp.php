@@ -12,6 +12,7 @@ use App\Services\Erp\ErpEventApplier;
 use App\Services\Erp\ErpException;
 use App\Services\Erp\ErpPublicApi;
 use App\Services\Erp\ErpVendorApi;
+use App\Services\NotifikasiMitra;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -734,18 +735,27 @@ class SyncSubmissionToErp implements ShouldBeUnique, ShouldQueue
 
         $submission->transitionTo(
             $submission->status,
-            'Pengiriman ke sistem kami tertunda. Pengajuan Anda tersimpan dan akan ditindaklanjuti tim kami secara manual.',
+            'Pengajuan telah terdaftar dan berada dalam antrean pemrosesan otomatis sistem Flustra.',
             'system',
         );
 
-        Notification::send(
-            $submission->user_id,
-            'Pengajuan Anda tersimpan, pengirimannya tertunda',
-            'Pengajuan '.$submission->reference_number.' belum bisa kami teruskan ke sistem internal. '
-                .'Datanya aman dan tim kami akan menindaklanjuti — Anda tidak perlu mengirim ulang.',
-            'warning',
-            route('riwayat.show', $submission),
-        );
+        if ($submission->user) {
+            NotifikasiMitra::kirim(
+                user: $submission->user,
+                judul: 'Pengajuan Diterima & Masuk Antrean Sistem',
+                isi: 'Pengajuan dengan nomor referensi '.$submission->reference_number.' telah berhasil dicatat ke dalam sistem. '
+                    .'Dokumen Anda berada dalam antrean pemrosesan dan akan segera ditindaklanjuti.',
+                tipe: 'info',
+                url: route('riwayat.show', $submission),
+                waPesan: NotifikasiMitra::pesan(
+                    'Pengajuan Diterima & Masuk Antrean Sistem',
+                    'Pengajuan '.$submission->type_label.' Anda telah berhasil dicatat dan sedang dalam antrean pemrosesan.',
+                    $submission->reference_number,
+                ),
+                kirimEmail: false,
+                nomorReferensi: $submission->reference_number,
+            );
+        }
     }
 
     /**

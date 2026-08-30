@@ -266,7 +266,18 @@ Route::middleware('auth')->group(function () {
         Route::delete('/log/hapus', [AdminDashboardController::class, 'hapusLog'])->name('log.hapus');
 
         Route::get('/pengumuman', [AdminMaintenanceController::class, 'edit'])->name('maintenance');
-        Route::put('/pengumuman', [AdminMaintenanceController::class, 'update'])->name('maintenance.update');
+        Route::post('/pengumuman/konfigurasi', [AdminMaintenanceController::class, 'update'])->name('maintenance.update');
+        Route::post('/pengumuman/banner', [AdminMaintenanceController::class, 'toggleBanner'])->name('maintenance.banner');
+        Route::post('/pengumuman/lockdown', [AdminMaintenanceController::class, 'toggleLockdown'])->name('maintenance.lockdown');
+        Route::post('/pengumuman/email', [AdminMaintenanceController::class, 'sendEmail'])->name('maintenance.email');
+        Route::post('/pengumuman/wa', [AdminMaintenanceController::class, 'sendWA'])->name('maintenance.wa');
+        Route::post('/pengumuman/selesai', [AdminMaintenanceController::class, 'complete'])->name('maintenance.complete');
+
+        // Pusat status & uji kanal notifikasi (WhatsApp Gateway & Email SMTP)
+        Route::get('/whatsapp', [\App\Http\Controllers\Admin\WhatsAppGatewayController::class, 'index'])->name('whatsapp');
+        Route::get('/whatsapp/status', [\App\Http\Controllers\Admin\WhatsAppGatewayController::class, 'status'])->name('whatsapp.status');
+        Route::post('/whatsapp/test', [\App\Http\Controllers\Admin\WhatsAppGatewayController::class, 'test'])->name('whatsapp.test');
+        Route::post('/email/test', [\App\Http\Controllers\Admin\WhatsAppGatewayController::class, 'testEmail'])->name('email.test');
 
         // Lihat portal dari sudut pandang mitra tertentu. Hanya baca —
         // TolakTulisSaatLihatSebagai menolak seluruh aksi kirim selama aktif.

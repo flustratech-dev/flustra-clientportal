@@ -26,11 +26,21 @@ use App\Models\PortalSetting;
  */
 class Maintenance
 {
-    // Dipasang admin portal.
-    public const LOKAL_AKTIF   = 'maintenance_active';
-    public const LOKAL_JUDUL   = 'maintenance_title';
-    public const LOKAL_PESAN   = 'maintenance_message';
-    public const LOKAL_TINGKAT = 'maintenance_severity';
+    // Dipasang admin portal (selaras dengan flustra-erp).
+    public const LOKAL_AKTIF          = 'maintenance_banner_active';
+    public const LOKAL_AKTIF_LEGACY   = 'maintenance_active';
+    public const LOKAL_JUDUL          = 'maintenance_title';
+    public const LOKAL_PESAN          = 'maintenance_description';
+    public const LOKAL_PESAN_LEGACY   = 'maintenance_message';
+    public const LOKAL_TINGKAT        = 'maintenance_severity';
+    public const LOKAL_JADWAL         = 'maintenance_scheduled_at';
+    public const LOKAL_DURASI         = 'maintenance_estimated_duration';
+    public const LOKAL_LOCKDOWN       = 'maintenance_lockdown';
+    public const LOKAL_EMAIL_SENT     = 'maintenance_email_sent';
+    public const LOKAL_EMAIL_SENT_AT  = 'maintenance_email_sent_at';
+    public const LOKAL_WA_SENT        = 'maintenance_wa_sent';
+    public const LOKAL_WA_SENT_AT     = 'maintenance_wa_sent_at';
+    public const LOKAL_COMPLETED_HASH = 'maintenance_completed_hash';
 
     // Didorong dari ERP.
     public const ERP_AKTIF   = 'erp_maintenance_active';
@@ -38,33 +48,40 @@ class Maintenance
     public const ERP_PESAN   = 'erp_maintenance_message';
     public const ERP_TINGKAT = 'erp_maintenance_severity';
     public const ERP_JADWAL  = 'erp_maintenance_scheduled_at';
+    public const ERP_DURASI  = 'erp_maintenance_estimated_duration';
 
     /**
      * Banner yang harus ditampilkan sekarang, atau null bila tidak ada.
      *
-     * @return array{sumber: string, judul: string, pesan: string, tingkat: string, jadwal: ?string}|null
+     * @return array{sumber: string, judul: string, pesan: string, tingkat: string, jadwal: ?string, durasi: ?string}|null
      */
     public static function aktif(): ?array
     {
-        if (PortalSetting::ambil(self::LOKAL_AKTIF) === '1') {
+        $lokalAktif = PortalSetting::ambil(self::LOKAL_AKTIF) === '1'
+            || PortalSetting::ambil(self::LOKAL_AKTIF_LEGACY) === '1';
+
+        if ($lokalAktif) {
             return [
                 'sumber'  => 'portal',
-                'judul'   => PortalSetting::ambil(self::LOKAL_JUDUL) ?: 'Pemberitahuan',
-                'pesan'   => PortalSetting::ambil(self::LOKAL_PESAN) ?: '',
+                'judul'   => PortalSetting::ambil(self::LOKAL_JUDUL) ?: 'Pemberitahuan Sistem',
+                'pesan'   => PortalSetting::ambil(self::LOKAL_PESAN)
+                    ?: (PortalSetting::ambil(self::LOKAL_PESAN_LEGACY) ?: ''),
                 'tingkat' => PortalSetting::ambil(self::LOKAL_TINGKAT) ?: 'info',
-                'jadwal'  => null,
+                'jadwal'  => PortalSetting::ambil(self::LOKAL_JADWAL),
+                'durasi'  => PortalSetting::ambil(self::LOKAL_DURASI),
             ];
         }
 
         if (PortalSetting::ambil(self::ERP_AKTIF) === '1') {
             return [
                 'sumber'  => 'erp',
-                'judul'   => PortalSetting::ambil(self::ERP_JUDUL) ?: 'Pemeliharaan sistem',
+                'judul'   => PortalSetting::ambil(self::ERP_JUDUL) ?: 'Pemeliharaan Sistem Terjadwal',
                 'pesan'   => PortalSetting::ambil(self::ERP_PESAN)
                     ?: 'Sebagian layanan mungkin belum bisa menampilkan data terbaru untuk sementara. '
-                        .'Pengajuan yang Anda kirim tetap tersimpan dan akan diproses setelah pemeliharaan selesai.',
+                        .'Pengajuan yang Anda kirim tetap tersimpan aman di portal dan otomatis diproses setelah pemeliharaan selesai.',
                 'tingkat' => PortalSetting::ambil(self::ERP_TINGKAT) ?: 'warning',
                 'jadwal'  => PortalSetting::ambil(self::ERP_JADWAL),
+                'durasi'  => PortalSetting::ambil(self::ERP_DURASI),
             ];
         }
 
@@ -94,6 +111,7 @@ class Maintenance
             self::ERP_PESAN   => $data['message'] ?? null,
             self::ERP_TINGKAT => $data['severity'] ?? 'warning',
             self::ERP_JADWAL  => $data['scheduled_at'] ?? null,
+            self::ERP_DURASI  => $data['estimated_duration'] ?? null,
         ]);
     }
 }

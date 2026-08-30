@@ -6,7 +6,7 @@
 @section('content')
 <div class="space-y-5 max-w-3xl mx-auto">
 
-    <a href="{{ route('admin.dashboard') }}" class="btn-secondary">&larr; Kondisi Portal</a>
+    <a href="{{ route('admin.dashboard') }}" class="btn-secondary">&larr; Kembali ke Panel Admin</a>
 
     <div class="erp-card !p-3.5 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30">
         <p class="text-xs text-blue-700 dark:text-blue-400 leading-relaxed">

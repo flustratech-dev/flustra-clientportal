@@ -7,6 +7,7 @@
 
     <div class="flex flex-wrap items-center gap-2">
         <a href="{{ route('admin.maintenance') }}" class="btn-secondary">Pengumuman</a>
+        <a href="{{ route('admin.whatsapp') }}" class="btn-secondary">Kanal Notifikasi (WA &amp; Email)</a>
         <a href="{{ route('admin.lihat-sebagai') }}" class="btn-secondary">Lihat Sebagai Mitra</a>
         @if($ringkasan['gagal_sinkron'] > 0)
             <form action="{{ route('admin.antre-ulang-semua') }}" method="POST"

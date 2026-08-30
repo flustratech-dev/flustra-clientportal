@@ -110,17 +110,20 @@ class ErpEventApplier
         });
 
         NotifikasiMitra::kirim(
-            $user,
-            'Pengajuan kerja sama disetujui',
-            'Akun Anda kini terhubung sebagai '.$link->partner_type_label.' untuk '.$link->company_name
+            user: $user,
+            judul: 'Pengajuan kerja sama disetujui',
+            isi: 'Akun Anda kini terhubung sebagai '.$link->partner_type_label.' untuk '.$link->company_name
                 .'. Kartu layanan '.$link->partner_type_label.' sudah bisa dipakai.',
-            'success',
-            $submission ? route('riwayat.show', $submission) : route('beranda'),
-            NotifikasiMitra::pesan(
+            tipe: 'success',
+            url: $submission ? route('riwayat.show', $submission) : route('beranda'),
+            waPesan: NotifikasiMitra::pesan(
                 'Pengajuan kerja sama Anda *disetujui*.',
                 'Akun Anda kini terhubung sebagai '.$link->partner_type_label.' untuk '.$link->company_name.'.',
                 $submission?->reference_number,
             ),
+            kirimEmail: true,
+            nomorReferensi: $submission?->reference_number,
+            namaPerusahaan: $link->company_name,
         );
 
         ActivityLog::log(
@@ -165,16 +168,19 @@ class ErpEventApplier
 
         if ($user) {
             NotifikasiMitra::kirim(
-                $user,
-                'Pengajuan kerja sama ditolak',
-                $reason.' Anda bisa memperbaiki data dan mengajukan kembali.',
-                'error',
-                $submission ? route('riwayat.show', $submission) : route('mitra.create'),
-                NotifikasiMitra::pesan(
+                user: $user,
+                judul: 'Pengajuan kerja sama ditolak',
+                isi: $reason.' Anda bisa memperbaiki data dan mengajukan kembali.',
+                tipe: 'error',
+                url: $submission ? route('riwayat.show', $submission) : route('mitra.create'),
+                waPesan: NotifikasiMitra::pesan(
                     'Pengajuan kerja sama Anda belum bisa kami setujui.',
                     $reason.' Anda bisa memperbaiki datanya dan mengajukan kembali lewat portal.',
                     $submission?->reference_number,
                 ),
+                kirimEmail: true,
+                nomorReferensi: $submission?->reference_number,
+                namaPerusahaan: $link->company_name,
             );
 
             ActivityLog::log(
@@ -234,14 +240,21 @@ class ErpEventApplier
         });
 
         if ($user) {
-            Notification::send(
-                $user->id,
-                'Akses mitra dicabut',
-                'Akses '.$link->partner_type_label.' untuk '.$link->company_name.' telah dicabut.'
+            NotifikasiMitra::kirim(
+                user: $user,
+                judul: 'Akses mitra dicabut',
+                isi: 'Akses '.$link->partner_type_label.' untuk '.$link->company_name.' telah dicabut.'
                     .($reason ? ' Alasan: '.$reason : '')
                     .' Hubungi tim kami bila ini di luar dugaan Anda.',
-                'warning',
-                route('beranda'),
+                tipe: 'warning',
+                url: route('beranda'),
+                waPesan: NotifikasiMitra::pesan(
+                    'Akses kemitraan Anda telah dicabut.',
+                    'Akses '.$link->partner_type_label.' untuk '.$link->company_name.' telah dinonaktifkan.'
+                    .($reason ? "\nAlasan: ".$reason : ''),
+                ),
+                kirimEmail: true,
+                namaPerusahaan: $link->company_name,
             );
 
             ActivityLog::log(
@@ -297,18 +310,33 @@ class ErpEventApplier
 
         $submission->transitionTo($status, $reason, 'erp', $actorName);
 
-        Notification::send(
-            $submission->user_id,
-            $submission->type_label.' '.mb_strtolower($submission->status_label),
-            'Pengajuan '.$submission->reference_number.' kini berstatus "'.$submission->status_label.'".'
-                .($reason ? ' '.$reason : ''),
-            match ($status) {
+        $user = $submission->user;
+        if ($user) {
+            $tipeNotif = match ($status) {
                 'approved' => 'success',
                 'rejected' => 'error',
                 default    => 'info',
-            },
-            route('riwayat.show', $submission),
-        );
+            };
+
+            $judulNotif = $submission->type_label.' '.mb_strtolower($submission->status_label);
+            $isiNotif   = 'Pengajuan '.$submission->reference_number.' kini berstatus "'.$submission->status_label.'".'
+                .($reason ? ' '.$reason : '');
+
+            NotifikasiMitra::kirim(
+                user: $user,
+                judul: $judulNotif,
+                isi: $isiNotif,
+                tipe: $tipeNotif,
+                url: route('riwayat.show', $submission),
+                waPesan: NotifikasiMitra::pesan(
+                    $judulNotif,
+                    $isiNotif,
+                    $submission->reference_number,
+                ),
+                kirimEmail: true,
+                nomorReferensi: $submission->reference_number,
+            );
+        }
 
         return true;
     }
