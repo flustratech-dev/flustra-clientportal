@@ -9,23 +9,9 @@
     pollInterval: null,
     prevUnreadCount: null,
 
-    // Document Preview Modal states
-    docModalOpen: false,
-    docModalUrl: '',
-    docModalTitle: 'Pratinjau Dokumen',
-    docModalLoading: true,
-    docModalDownloadUrl: '',
-
+    // Fast native document print preview
     openDocPreview(url, title = 'Pratinjau Dokumen') {
         window.openDocPreview(url, title);
-    },
-
-    printDocModal() {
-        const iframe = document.getElementById('globalDocModalIframe');
-        if (iframe && iframe.contentWindow) {
-            iframe.contentWindow.focus();
-            iframe.contentWindow.print();
-        }
     },
 
     init() {
@@ -221,34 +207,40 @@
     </script>
 
     <script>
-        // Global Fast Document Preview Modal Handler
+        // Global Fast Native Browser Print Preview Handler
         window.openDocPreview = function(url, title = 'Pratinjau Dokumen') {
             try {
                 let targetUrl = new URL(url, window.location.origin);
                 targetUrl.searchParams.set('format_mode', 'html');
+                targetUrl.searchParams.set('print', '1');
 
-                let downloadUrl = new URL(url, window.location.origin);
-
-                if (window.Alpine && document.documentElement) {
-                    try {
-                        let alpineData = Alpine.$data(document.documentElement);
-                        if (alpineData && typeof alpineData.docModalOpen !== 'undefined') {
-                            alpineData.docModalTitle = title;
-                            alpineData.docModalUrl = targetUrl.toString();
-                            alpineData.docModalDownloadUrl = downloadUrl.toString();
-                            alpineData.docModalLoading = true;
-                            alpineData.docModalOpen = true;
-                        }
-                    } catch (e) {}
+                let printIframe = document.getElementById('nativeDocPrintIframe');
+                if (!printIframe) {
+                    printIframe = document.createElement('iframe');
+                    printIframe.id = 'nativeDocPrintIframe';
+                    printIframe.name = 'nativeDocPrintIframe';
+                    printIframe.style.position = 'fixed';
+                    printIframe.style.top = '-9999px';
+                    printIframe.style.left = '-9999px';
+                    printIframe.style.width = '1024px';
+                    printIframe.style.height = '768px';
+                    printIframe.style.opacity = '0';
+                    printIframe.style.pointerEvents = 'none';
+                    document.body.appendChild(printIframe);
                 }
 
-                window.dispatchEvent(new CustomEvent('open-doc-preview', {
-                    detail: {
-                        url: targetUrl.toString(),
-                        downloadUrl: downloadUrl.toString(),
-                        title: title
+                printIframe.onload = function() {
+                    try {
+                        setTimeout(function() {
+                            printIframe.contentWindow.focus();
+                            printIframe.contentWindow.print();
+                        }, 120);
+                    } catch (e) {
+                        window.open(targetUrl.toString(), '_blank');
                     }
-                }));
+                };
+
+                printIframe.src = targetUrl.toString();
             } catch (err) {
                 window.open(url, '_blank');
             }
@@ -623,111 +615,6 @@
             </div>
             <div x-show="cariKata.trim().length < 2" class="px-4 py-8 text-center text-xs text-slate-400">
                 Ketik minimal dua huruf. Cari nomor pengajuan, judulnya, atau nama layanan.
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ========================================== -->
-<!-- GLOBAL COMPACT DOCUMENT MODAL (POP UP)     -->
-<!-- ========================================== -->
-<div x-show="docModalOpen" 
-     x-cloak 
-     class="fixed inset-0 z-[200] overflow-y-auto"
-     aria-labelledby="doc-modal-title" 
-     role="dialog" 
-     aria-modal="true"
-     @open-doc-preview.window="docModalTitle = $event.detail.title || 'Pratinjau Dokumen'; docModalUrl = $event.detail.url; docModalDownloadUrl = $event.detail.downloadUrl || $event.detail.url; docModalLoading = true; docModalOpen = true">
-    
-    <div class="flex items-center justify-center min-h-screen p-4 sm:p-6 text-center">
-        <!-- Backdrop -->
-        <div x-show="docModalOpen" 
-             x-transition:enter="ease-out duration-200"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             x-transition:leave="ease-in duration-150"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0"
-             class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity" 
-             @click="docModalOpen = false"></div>
-
-        <!-- Modal Dialog Card (Compact / Sized Nicely) -->
-        <div x-show="docModalOpen" 
-             x-transition:enter="ease-out duration-200"
-             x-transition:enter-start="opacity-0 scale-95"
-             x-transition:enter-end="opacity-100 scale-100"
-             x-transition:leave="ease-in duration-150"
-             x-transition:leave-start="opacity-100 scale-100"
-             x-transition:leave-end="opacity-0 scale-95"
-             class="relative z-10 bg-white dark:bg-slate-900 rounded-2xl text-left shadow-2xl transform transition-all w-full max-w-2xl max-h-[90vh] flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden">
-            
-            <!-- Modal Header -->
-            <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
-                <div class="flex items-center gap-3 min-w-0">
-                    <div class="w-9 h-9 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                        </svg>
-                    </div>
-                    <div class="min-w-0">
-                        <h3 class="text-sm font-bold text-slate-900 dark:text-white truncate" x-html="docModalTitle">Pratinjau Dokumen</h3>
-                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Format resmi cetak &bull; PT Flustra Teknologi Nusantara</p>
-                    </div>
-                </div>
-
-                <button type="button" 
-                        @click="docModalOpen = false" 
-                        class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-
-            <!-- Modal Body: Preview Box & Quick Actions -->
-            <div class="p-5 space-y-4 overflow-y-auto flex-1">
-                <!-- Embedded Document Preview Area -->
-                <div class="relative w-full h-72 sm:h-80 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 overflow-hidden flex items-center justify-center">
-                    <div x-show="docModalLoading" 
-                         class="absolute inset-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xs z-10 flex flex-col items-center justify-center gap-2">
-                        <div class="w-7 h-7 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                        <span class="text-xs font-medium text-slate-500">Memuat pratinjau...</span>
-                    </div>
-
-                    <iframe id="globalDocModalIframe" 
-                            :src="docModalUrl" 
-                            @load="docModalLoading = false"
-                            class="w-full h-full bg-white border-0"></iframe>
-                </div>
-
-                <!-- Quick Actions Grid -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                    <!-- Direct Download Button -->
-                    <a :href="docModalDownloadUrl" 
-                       target="_blank" 
-                       class="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-md shadow-blue-500/10 transition-all cursor-pointer">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                        <span>Unduh Berkas PDF</span>
-                    </a>
-
-                    <!-- Print Button -->
-                    <button type="button" 
-                            @click="printDocModal()" 
-                            class="flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold rounded-xl transition-all cursor-pointer">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                        </svg>
-                        <span>Cetak Dokumen</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Modal Footer -->
-            <div class="px-5 py-3 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-slate-500 dark:text-slate-400 text-[11px] shrink-0">
-                <span>Tekan <kbd class="px-1.5 py-0.5 rounded bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 font-mono text-[10px] text-slate-700 dark:text-slate-300">ESC</kbd> untuk menutup</span>
-                <button type="button" @click="docModalOpen = false" class="font-medium text-slate-600 dark:text-slate-300 hover:underline cursor-pointer">Tutup</button>
             </div>
         </div>
     </div>
