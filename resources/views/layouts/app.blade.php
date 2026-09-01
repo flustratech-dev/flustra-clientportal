@@ -207,16 +207,25 @@
     </script>
 
     <script>
-        // Global Fast Native Browser Print Preview Handler
-        window.openDocPreview = function(url, title = 'Pratinjau Dokumen') {
-            try {
-                let targetUrl = new URL(url, window.location.origin);
-                targetUrl.searchParams.set('format_mode', 'html');
-                targetUrl.searchParams.set('print', '1');
+        // Global Fast Native Browser Print Preview Handler (Single Invocation Guaranteed)
+        (function() {
+            let isPrintingActive = false;
 
-                let printIframe = document.getElementById('nativeDocPrintIframe');
-                if (!printIframe) {
-                    printIframe = document.createElement('iframe');
+            window.openDocPreview = function(url, title = 'Pratinjau Dokumen') {
+                if (isPrintingActive) return;
+                isPrintingActive = true;
+
+                try {
+                    let targetUrl = new URL(url, window.location.origin);
+                    targetUrl.searchParams.set('format_mode', 'html');
+
+                    // Clean up any old print iframe
+                    let oldIframe = document.getElementById('nativeDocPrintIframe');
+                    if (oldIframe) {
+                        oldIframe.remove();
+                    }
+
+                    let printIframe = document.createElement('iframe');
                     printIframe.id = 'nativeDocPrintIframe';
                     printIframe.name = 'nativeDocPrintIframe';
                     printIframe.style.position = 'fixed';
@@ -227,24 +236,34 @@
                     printIframe.style.opacity = '0';
                     printIframe.style.pointerEvents = 'none';
                     document.body.appendChild(printIframe);
-                }
 
-                printIframe.onload = function() {
-                    try {
+                    let hasPrinted = false;
+                    printIframe.onload = function() {
+                        if (hasPrinted) return;
+                        hasPrinted = true;
+                        printIframe.onload = null;
+
                         setTimeout(function() {
-                            printIframe.contentWindow.focus();
-                            printIframe.contentWindow.print();
-                        }, 120);
-                    } catch (e) {
-                        window.open(targetUrl.toString(), '_blank');
-                    }
-                };
+                            try {
+                                printIframe.contentWindow.focus();
+                                printIframe.contentWindow.print();
+                            } catch (e) {
+                                console.error('Print preview error:', e);
+                            } finally {
+                                setTimeout(function() {
+                                    isPrintingActive = false;
+                                }, 500);
+                            }
+                        }, 150);
+                    };
 
-                printIframe.src = targetUrl.toString();
-            } catch (err) {
-                window.open(url, '_blank');
-            }
-        };
+                    printIframe.src = targetUrl.toString();
+                } catch (err) {
+                    console.error('openDocPreview error:', err);
+                    isPrintingActive = false;
+                }
+            };
+        })();
     </script>
 
     @include('partials.tema')
