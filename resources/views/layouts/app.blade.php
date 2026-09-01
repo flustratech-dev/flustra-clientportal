@@ -9,9 +9,23 @@
     pollInterval: null,
     prevUnreadCount: null,
 
-    // Fast native document print preview
+    // Document Preview Modal states
+    docModalOpen: false,
+    docModalUrl: '',
+    docModalTitle: 'Pratinjau Dokumen',
+    docModalLoading: true,
+    docModalDownloadUrl: '',
+
     openDocPreview(url, title = 'Pratinjau Dokumen') {
         window.openDocPreview(url, title);
+    },
+
+    printDocModal() {
+        const iframe = document.getElementById('globalDocModalIframe');
+        if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+        }
     },
 
     init() {
@@ -23,6 +37,23 @@
 
         this.pollNotifications(true);
         this.startPolling();
+
+        // Global document preview event
+        window.addEventListener('open-doc-preview', (e) => {
+            if (e.detail && e.detail.url) {
+                this.docModalTitle = e.detail.title || 'Pratinjau Dokumen';
+                this.docModalUrl = e.detail.url;
+                this.docModalDownloadUrl = e.detail.downloadUrl || e.detail.url;
+                this.docModalLoading = true;
+                this.docModalOpen = true;
+            }
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.docModalOpen = false;
+            }
+        });
 
         // Jeda polling saat tab tidak aktif untuk menghemat beban server
         document.addEventListener('visibilitychange', () => {
@@ -190,40 +221,21 @@
     </script>
 
     <script>
-        // Global Fast Native Browser Print Preview Handler
+        // Global Fast Document Preview Modal Handler
         window.openDocPreview = function(url, title = 'Pratinjau Dokumen') {
             try {
                 let targetUrl = new URL(url, window.location.origin);
                 targetUrl.searchParams.set('format_mode', 'html');
-                targetUrl.searchParams.set('print', '1');
 
-                let printIframe = document.getElementById('nativeDocPrintIframe');
-                if (!printIframe) {
-                    printIframe = document.createElement('iframe');
-                    printIframe.id = 'nativeDocPrintIframe';
-                    printIframe.name = 'nativeDocPrintIframe';
-                    printIframe.style.position = 'fixed';
-                    printIframe.style.top = '-9999px';
-                    printIframe.style.left = '-9999px';
-                    printIframe.style.width = '1024px';
-                    printIframe.style.height = '768px';
-                    printIframe.style.opacity = '0';
-                    printIframe.style.pointerEvents = 'none';
-                    document.body.appendChild(printIframe);
-                }
+                let downloadUrl = new URL(url, window.location.origin);
 
-                printIframe.onload = function() {
-                    try {
-                        setTimeout(function() {
-                            printIframe.contentWindow.focus();
-                            printIframe.contentWindow.print();
-                        }, 120);
-                    } catch (e) {
-                        window.open(targetUrl.toString(), '_blank');
+                window.dispatchEvent(new CustomEvent('open-doc-preview', {
+                    detail: {
+                        url: targetUrl.toString(),
+                        downloadUrl: downloadUrl.toString(),
+                        title: title
                     }
-                };
-
-                printIframe.src = targetUrl.toString();
+                }));
             } catch (err) {
                 window.open(url, '_blank');
             }
@@ -598,6 +610,102 @@
             </div>
             <div x-show="cariKata.trim().length < 2" class="px-4 py-8 text-center text-xs text-slate-400">
                 Ketik minimal dua huruf. Cari nomor pengajuan, judulnya, atau nama layanan.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- GLOBAL DOCUMENT PREVIEW MODAL (POP UP)     -->
+<!-- ========================================== -->
+<div x-show="docModalOpen" 
+     x-cloak 
+     class="fixed inset-0 z-[200] overflow-y-auto"
+     aria-labelledby="doc-modal-title" 
+     role="dialog" 
+     aria-modal="true">
+    
+    <div class="flex items-center justify-center min-h-screen p-2 sm:p-4 md:p-6 text-center">
+        <!-- Backdrop -->
+        <div x-show="docModalOpen" 
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 bg-slate-900/70 backdrop-blur-xs transition-opacity" 
+             @click="docModalOpen = false"></div>
+
+        <!-- Modal Panel -->
+        <div x-show="docModalOpen" 
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+             x-transition:leave-end="opacity-0 scale-95 translate-y-4"
+             class="relative z-10 bg-white dark:bg-slate-900 rounded-2xl text-left shadow-2xl transform transition-all w-full max-w-5xl h-[90vh] flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden">
+            
+            <!-- Modal Header -->
+            <div class="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/80 shrink-0">
+                <div class="flex items-center gap-2.5 min-w-0 pr-4">
+                    <div class="w-8 h-8 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+                        <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white truncate" x-html="docModalTitle">Pratinjau Dokumen</h3>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Pratinjau format resmi dokumen cetak &bull; PT Flustra Teknologi Nusantara</p>
+                    </div>
+                </div>
+                
+                <!-- Header Action Buttons -->
+                <div class="flex items-center gap-2 shrink-0">
+                    <button type="button" 
+                            @click="printDocModal()" 
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        </svg>
+                        <span>Cetak</span>
+                    </button>
+
+                    <a :href="docModalDownloadUrl" 
+                       target="_blank" 
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-semibold rounded-lg transition-colors"
+                       title="Unduh Berkas PDF Asli / Buka Tab Penuh">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        <span class="hidden sm:inline">Unduh PDF</span>
+                    </a>
+
+                    <button type="button" 
+                            @click="docModalOpen = false" 
+                            class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body (Iframe container) -->
+            <div class="relative flex-1 w-full bg-slate-100 dark:bg-slate-950 p-2 sm:p-4 overflow-hidden flex items-center justify-center">
+                <!-- Loading Indicator -->
+                <div x-show="docModalLoading" 
+                     class="absolute inset-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xs z-10 flex flex-col items-center justify-center gap-3">
+                    <div class="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p class="text-xs font-medium text-slate-600 dark:text-slate-300">Menyiapkan pratinjau dokumen...</p>
+                </div>
+
+                <!-- Iframe Document Preview -->
+                <iframe id="globalDocModalIframe" 
+                        :src="docModalUrl" 
+                        @load="docModalLoading = false"
+                        class="w-full h-full rounded-xl bg-white shadow-md border border-slate-200 dark:border-slate-800"></iframe>
             </div>
         </div>
     </div>
