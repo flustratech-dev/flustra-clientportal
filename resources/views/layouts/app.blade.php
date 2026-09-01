@@ -229,6 +229,19 @@
 
                 let downloadUrl = new URL(url, window.location.origin);
 
+                if (window.Alpine && document.documentElement) {
+                    try {
+                        let alpineData = Alpine.$data(document.documentElement);
+                        if (alpineData && typeof alpineData.docModalOpen !== 'undefined') {
+                            alpineData.docModalTitle = title;
+                            alpineData.docModalUrl = targetUrl.toString();
+                            alpineData.docModalDownloadUrl = downloadUrl.toString();
+                            alpineData.docModalLoading = true;
+                            alpineData.docModalOpen = true;
+                        }
+                    } catch (e) {}
+                }
+
                 window.dispatchEvent(new CustomEvent('open-doc-preview', {
                     detail: {
                         url: targetUrl.toString(),
@@ -616,96 +629,105 @@
 </div>
 
 <!-- ========================================== -->
-<!-- GLOBAL DOCUMENT PREVIEW MODAL (POP UP)     -->
+<!-- GLOBAL COMPACT DOCUMENT MODAL (POP UP)     -->
 <!-- ========================================== -->
 <div x-show="docModalOpen" 
      x-cloak 
      class="fixed inset-0 z-[200] overflow-y-auto"
      aria-labelledby="doc-modal-title" 
      role="dialog" 
-     aria-modal="true">
+     aria-modal="true"
+     @open-doc-preview.window="docModalTitle = $event.detail.title || 'Pratinjau Dokumen'; docModalUrl = $event.detail.url; docModalDownloadUrl = $event.detail.downloadUrl || $event.detail.url; docModalLoading = true; docModalOpen = true">
     
-    <div class="flex items-center justify-center min-h-screen p-2 sm:p-4 md:p-6 text-center">
+    <div class="flex items-center justify-center min-h-screen p-4 sm:p-6 text-center">
         <!-- Backdrop -->
         <div x-show="docModalOpen" 
-             x-transition:enter="ease-out duration-300"
+             x-transition:enter="ease-out duration-200"
              x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100"
-             x-transition:leave="ease-in duration-200"
+             x-transition:leave="ease-in duration-150"
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0"
-             class="fixed inset-0 bg-slate-900/70 backdrop-blur-xs transition-opacity" 
+             class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity" 
              @click="docModalOpen = false"></div>
 
-        <!-- Modal Panel -->
+        <!-- Modal Dialog Card (Compact / Sized Nicely) -->
         <div x-show="docModalOpen" 
-             x-transition:enter="ease-out duration-300"
-             x-transition:enter-start="opacity-0 scale-95 translate-y-4"
-             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-             x-transition:leave="ease-in duration-200"
-             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-             x-transition:leave-end="opacity-0 scale-95 translate-y-4"
-             class="relative z-10 bg-white dark:bg-slate-900 rounded-2xl text-left shadow-2xl transform transition-all w-full max-w-5xl h-[90vh] flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden">
+             x-transition:enter="ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             class="relative z-10 bg-white dark:bg-slate-900 rounded-2xl text-left shadow-2xl transform transition-all w-full max-w-2xl max-h-[90vh] flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden">
             
             <!-- Modal Header -->
-            <div class="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/80 shrink-0">
-                <div class="flex items-center gap-2.5 min-w-0 pr-4">
-                    <div class="w-8 h-8 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
-                        <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-9 h-9 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                         </svg>
                     </div>
                     <div class="min-w-0">
                         <h3 class="text-sm font-bold text-slate-900 dark:text-white truncate" x-html="docModalTitle">Pratinjau Dokumen</h3>
-                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Pratinjau format resmi dokumen cetak &bull; PT Flustra Teknologi Nusantara</p>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Format resmi cetak &bull; PT Flustra Teknologi Nusantara</p>
                     </div>
                 </div>
-                
-                <!-- Header Action Buttons -->
-                <div class="flex items-center gap-2 shrink-0">
-                    <button type="button" 
-                            @click="printDocModal()" 
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                        </svg>
-                        <span>Cetak</span>
-                    </button>
 
+                <button type="button" 
+                        @click="docModalOpen = false" 
+                        class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Body: Preview Box & Quick Actions -->
+            <div class="p-5 space-y-4 overflow-y-auto flex-1">
+                <!-- Embedded Document Preview Area -->
+                <div class="relative w-full h-72 sm:h-80 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 overflow-hidden flex items-center justify-center">
+                    <div x-show="docModalLoading" 
+                         class="absolute inset-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xs z-10 flex flex-col items-center justify-center gap-2">
+                        <div class="w-7 h-7 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        <span class="text-xs font-medium text-slate-500">Memuat pratinjau...</span>
+                    </div>
+
+                    <iframe id="globalDocModalIframe" 
+                            :src="docModalUrl" 
+                            @load="docModalLoading = false"
+                            class="w-full h-full bg-white border-0"></iframe>
+                </div>
+
+                <!-- Quick Actions Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <!-- Direct Download Button -->
                     <a :href="docModalDownloadUrl" 
                        target="_blank" 
-                       class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-semibold rounded-lg transition-colors"
-                       title="Unduh Berkas PDF Asli / Buka Tab Penuh">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       class="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-md shadow-blue-500/10 transition-all cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                        <span class="hidden sm:inline">Unduh PDF</span>
+                        <span>Unduh Berkas PDF</span>
                     </a>
 
+                    <!-- Print Button -->
                     <button type="button" 
-                            @click="docModalOpen = false" 
-                            class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            @click="printDocModal()" 
+                            class="flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold rounded-xl transition-all cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                         </svg>
+                        <span>Cetak Dokumen</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Modal Body (Iframe container) -->
-            <div class="relative flex-1 w-full bg-slate-100 dark:bg-slate-950 p-2 sm:p-4 overflow-hidden flex items-center justify-center">
-                <!-- Loading Indicator -->
-                <div x-show="docModalLoading" 
-                     class="absolute inset-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xs z-10 flex flex-col items-center justify-center gap-3">
-                    <div class="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                    <p class="text-xs font-medium text-slate-600 dark:text-slate-300">Menyiapkan pratinjau dokumen...</p>
-                </div>
-
-                <!-- Iframe Document Preview -->
-                <iframe id="globalDocModalIframe" 
-                        :src="docModalUrl" 
-                        @load="docModalLoading = false"
-                        class="w-full h-full rounded-xl bg-white shadow-md border border-slate-200 dark:border-slate-800"></iframe>
+            <!-- Modal Footer -->
+            <div class="px-5 py-3 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-slate-500 dark:text-slate-400 text-[11px] shrink-0">
+                <span>Tekan <kbd class="px-1.5 py-0.5 rounded bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 font-mono text-[10px] text-slate-700 dark:text-slate-300">ESC</kbd> untuk menutup</span>
+                <button type="button" @click="docModalOpen = false" class="font-medium text-slate-600 dark:text-slate-300 hover:underline cursor-pointer">Tutup</button>
             </div>
         </div>
     </div>
