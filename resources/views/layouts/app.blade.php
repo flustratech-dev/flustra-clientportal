@@ -9,6 +9,11 @@
     pollInterval: null,
     prevUnreadCount: null,
 
+    // Fast native document print preview
+    openDocPreview(url, title = 'Pratinjau Dokumen') {
+        window.openDocPreview(url, title);
+    },
+
     init() {
         this.$watch('darkMode', val => {
             localStorage.setItem('darkMode', val);
@@ -184,9 +189,54 @@
         }
     </script>
 
+    <script>
+        // Global Fast Native Browser Print Preview Handler
+        window.openDocPreview = function(url, title = 'Pratinjau Dokumen') {
+            try {
+                let targetUrl = new URL(url, window.location.origin);
+                targetUrl.searchParams.set('format_mode', 'html');
+                targetUrl.searchParams.set('print', '1');
+
+                let printIframe = document.getElementById('nativeDocPrintIframe');
+                if (!printIframe) {
+                    printIframe = document.createElement('iframe');
+                    printIframe.id = 'nativeDocPrintIframe';
+                    printIframe.name = 'nativeDocPrintIframe';
+                    printIframe.style.position = 'fixed';
+                    printIframe.style.top = '-9999px';
+                    printIframe.style.left = '-9999px';
+                    printIframe.style.width = '1024px';
+                    printIframe.style.height = '768px';
+                    printIframe.style.opacity = '0';
+                    printIframe.style.pointerEvents = 'none';
+                    document.body.appendChild(printIframe);
+                }
+
+                printIframe.onload = function() {
+                    try {
+                        setTimeout(function() {
+                            printIframe.contentWindow.focus();
+                            printIframe.contentWindow.print();
+                        }, 120);
+                    } catch (e) {
+                        window.open(targetUrl.toString(), '_blank');
+                    }
+                };
+
+                printIframe.src = targetUrl.toString();
+            } catch (err) {
+                window.open(url, '_blank');
+            }
+        };
+    </script>
+
     @include('partials.tema')
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
 
     <style>
         @media print {
