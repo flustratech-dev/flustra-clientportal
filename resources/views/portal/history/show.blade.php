@@ -14,8 +14,8 @@
             <div class="flex items-center gap-3">
                 <img src="{{ asset('images/flustraa.png') }}" class="w-10 h-10 object-contain" alt="Flustra">
                 <div>
-                    <h1 class="text-sm font-black text-slate-900 uppercase tracking-wider">PT FLUSTRA TEKNOLOGI NUSANTARA</h1>
-                    <p class="text-[10px] text-slate-600">Gedung Flustra Tower Lt. 8, Jakarta &bull; support@flustra.id &bull; www.flustra.id</p>
+                    <h1 class="text-sm font-black text-slate-900 uppercase tracking-wider">{{ config('company.name') }}</h1>
+                    <p class="text-[10px] text-slate-600">{{ config('company.address') }} &bull; {{ config('company.email_support') }} &bull; {{ preg_replace('#^https?://#i', '', (string) config('company.website')) }}</p>
                 </div>
             </div>
             <div class="text-right">
