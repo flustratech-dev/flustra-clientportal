@@ -6,9 +6,11 @@ use App\Http\Controllers\Layanan\LayananVendorController;
 use App\Jobs\SyncSubmissionToErp;
 use App\Models\ActivityLog;
 use App\Models\Submission;
+use App\Services\Erp\ErpException;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 /**
  * Kontrak & Dokumen — sisi vendor.
@@ -26,6 +28,27 @@ class KontrakVendorController extends LayananVendorController
         $contracts = $this->tarik(fn () => $this->erp->contracts($this->user()), []);
 
         return $this->halaman('layanan.vendor.kontrak.index', ['contracts' => $contracts]);
+    }
+
+    /** Alirkan ulang naskah PKS vendor (PDF) dari ERP — penjelasannya sama dengan sisi pelanggan. */
+    public function pdf(int $contract): Response|RedirectResponse
+    {
+        try {
+            $isi = $this->erp->contractPdf($this->user(), $contract);
+        } catch (ErpException $e) {
+            if ($e->statusCode === 404) {
+                abort(404);
+            }
+
+            return redirect()
+                ->route('vendor.kontrak.index')
+                ->with('error', 'Naskah perjanjian sedang tidak bisa kami ambil. Coba lagi beberapa saat lagi.');
+        }
+
+        return response($isi, 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="perjanjian-kerja-sama-'.$contract.'.pdf"',
+        ]);
     }
 
     public function acknowledge(Request $request, int $contract): RedirectResponse

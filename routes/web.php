@@ -197,6 +197,8 @@ Route::middleware('auth')->group(function () {
             ->middleware('throttle:20,1')->name('retur.store');
 
         Route::get('/kontrak', [KontrakController::class, 'index'])->name('kontrak.index');
+        Route::get('/kontrak/{contract}/pdf', [KontrakController::class, 'pdf'])
+            ->whereNumber('contract')->name('kontrak.pdf');
         Route::post('/kontrak/{contract}/setujui', [KontrakController::class, 'acknowledge'])
             ->whereNumber('contract')->middleware('throttle:20,1')->name('kontrak.acknowledge');
 
@@ -235,6 +237,8 @@ Route::middleware('auth')->group(function () {
             ->whereNumber('purchaseReturn')->middleware('throttle:10,60')->name('retur.dispute');
 
         Route::get('/kontrak', [KontrakVendorController::class, 'index'])->name('kontrak.index');
+        Route::get('/kontrak/{contract}/pdf', [KontrakVendorController::class, 'pdf'])
+            ->whereNumber('contract')->name('kontrak.pdf');
         Route::post('/kontrak/{contract}/setujui', [KontrakVendorController::class, 'acknowledge'])
             ->whereNumber('contract')->middleware('throttle:20,1')->name('kontrak.acknowledge');
 

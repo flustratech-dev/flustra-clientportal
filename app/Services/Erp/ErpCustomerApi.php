@@ -118,6 +118,21 @@ class ErpCustomerApi
         return $this->get($user, '/contracts')['data'] ?? [];
     }
 
+    /**
+     * Naskah PKS dalam bentuk PDF mentah, dari ERP.
+     *
+     * Portal sengaja tidak menyimpan atau menulis ulang naskahnya: PDF-nya dibuat
+     * ERP dari kelas yang sama dengan unduhan staf, jadi mitra membaca dokumen
+     * yang persis sama dengan yang dipegang tim internal.
+     */
+    public function contractPdf(User $user, int $contractId): string
+    {
+        return $this->client->getRaw(
+            $this->prefix($user).'/contracts/'.$contractId.'/pdf',
+            ['portal_user_id' => $this->portalUserId($user)],
+        );
+    }
+
     // =====================================================================
     // Tulis — dipanggil dari SyncSubmissionToErp, bukan dari controller
     // =====================================================================

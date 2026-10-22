@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Layanan;
 use App\Jobs\SyncSubmissionToErp;
 use App\Models\ActivityLog;
 use App\Models\Submission;
+use App\Services\Erp\ErpException;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 /**
  * Kontrak Kerja Sama — lihat dan setujui.
@@ -25,6 +27,33 @@ class KontrakController extends LayananPelangganController
         $contracts = $this->tarik(fn () => $this->erp->contracts($this->user()), []);
 
         return $this->halaman('layanan.kontrak.index', ['contracts' => $contracts]);
+    }
+
+    /**
+     * Alirkan ulang naskah PKS (PDF) dari ERP.
+     *
+     * Portal tidak menulis ulang atau menyimpan naskahnya: yang dibaca mitra
+     * harus persis dokumen yang dipegang tim internal. Kalau ERP sedang mati,
+     * pengguna dikembalikan dengan pesan jujur, bukan berkas kosong.
+     */
+    public function pdf(int $contract): Response|RedirectResponse
+    {
+        try {
+            $isi = $this->erp->contractPdf($this->user(), $contract);
+        } catch (ErpException $e) {
+            if ($e->statusCode === 404) {
+                abort(404);
+            }
+
+            return redirect()
+                ->route('layanan.kontrak.index')
+                ->with('error', 'Naskah perjanjian sedang tidak bisa kami ambil. Coba lagi beberapa saat lagi.');
+        }
+
+        return response($isi, 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="perjanjian-kerja-sama-'.$contract.'.pdf"',
+        ]);
     }
 
     public function acknowledge(Request $request, int $contract): RedirectResponse
