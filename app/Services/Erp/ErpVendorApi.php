@@ -109,6 +109,15 @@ class ErpVendorApi
         return $this->get($user, '/contracts')['data'] ?? [];
     }
 
+    /** Naskah PKS vendor sebagai PDF mentah dari ERP — kembaran `ErpCustomerApi::contractPdf`. */
+    public function contractPdf(User $user, int $contractId): string
+    {
+        return $this->client->getRaw(
+            $this->prefix($user).'/contracts/'.$contractId.'/pdf',
+            ['portal_user_id' => $this->portalUserId($user)],
+        );
+    }
+
     // =====================================================================
     // Tulis — dipanggil dari SyncSubmissionToErp, bukan dari controller
     // =====================================================================
