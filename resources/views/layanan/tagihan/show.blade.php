@@ -128,8 +128,13 @@
                 </svg>
                 <span>Pratinjau / Cetak Faktur (PDF)</span>
             </button>
-            @if($invoice['remaining_amount'] > 0)
-                <a href="{{ route('layanan.pembayaran.create', ['invoice' => $invoice['id']]) }}" class="btn-primary">Konfirmasi Pembayaran</a>
+            {{-- Bayar online lewat halaman bayar ERP (VA/QRIS). Tautan datang dari ERP, bukan dirakit di portal. --}}
+            @if($invoice['remaining_amount'] > 0 && !empty($invoice['payment']['online_url']))
+                <a href="{{ $invoice['payment']['online_url'] }}" target="_blank" rel="noopener" class="btn-primary">Bayar Online</a>
+            @endif
+            {{-- Unggah bukti transfer hanya bila ERP mengizinkan (butuh rekening aktif). ERP lama tanpa info `payment` = perilaku lama. --}}
+            @if($invoice['remaining_amount'] > 0 && ($invoice['payment']['allow_transfer'] ?? true))
+                <a href="{{ route('layanan.pembayaran.create', ['invoice' => $invoice['id']]) }}" class="btn-secondary">Konfirmasi Pembayaran</a>
             @endif
             @if(!empty($invoice['items']))
                 <a href="{{ route('layanan.retur.create', ['invoice' => $invoice['id']]) }}" class="btn-secondary">Ajukan Retur</a>
