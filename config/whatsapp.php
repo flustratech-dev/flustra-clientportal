@@ -18,7 +18,7 @@ return [
 
     'enabled' => env('WA_GATEWAY_ENABLED', true),
 
-    'url' => env('WA_GATEWAY_URL', 'https://wa.flustra.id'),
+    'url' => env('WA_GATEWAY_URL', 'https://wa.vexahostcloud.my.id'),
 
     // API key milik tenant aplikasi ini di dashboard gateway.
     'key' => env('WA_GATEWAY_KEY'),
